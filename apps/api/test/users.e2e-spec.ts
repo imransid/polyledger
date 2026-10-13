@@ -139,6 +139,69 @@ describe('users', () => {
       .expect(401);
   });
 
+  describe('GET /users', () => {
+    const list = async (query = '') =>
+      (
+        await api()
+          .get(`/users${query}`)
+          .auth(ownerToken, { type: 'bearer' })
+          .expect(200)
+      ).body;
+
+    beforeEach(async () => {
+      await createUser(app, Role.OPERATOR, { phone: '+8801712345678' });
+      await createUser(app, Role.STOREKEEPER);
+      const supervisor = await createUser(app, Role.SUPERVISOR);
+      await asOwner('post', `/users/${supervisor.id}/deactivate`).expect(200);
+    });
+
+    it('lists users without their password hashes', async () => {
+      const page = await list();
+
+      expect(page).toMatchObject({ total: 4, page: 1, pageSize: 50 });
+      for (const user of page.items) {
+        expect(user).not.toHaveProperty('passwordHash');
+      }
+    });
+
+    it('searches by name, email and phone', async () => {
+      expect((await list('?search=storekeeper')).total).toBe(1);
+      expect((await list('?search=OWNER@EXAMPLE')).total).toBe(1);
+      expect((await list('?search=01712345')).items[0].role).toBe(
+        Role.OPERATOR,
+      );
+    });
+
+    it('filters by active and pages', async () => {
+      const inactive = await list('?active=false');
+      expect(inactive.items.map((u: { role: Role }) => u.role)).toEqual([
+        Role.SUPERVISOR,
+      ]);
+
+      const secondPage = await list('?pageSize=3&page=2');
+      expect(secondPage).toMatchObject({ total: 4, page: 2 });
+      expect(secondPage.items).toHaveLength(1);
+    });
+  });
+
+  it('reactivating lets a user log in again, but not with old sessions', async () => {
+    const user = await createUser(app, Role.OPERATOR);
+    const tokens = await logIn(app, 'operator@example.com');
+    await asOwner('post', `/users/${user.id}/deactivate`).expect(200);
+
+    const response = await asOwner(
+      'post',
+      `/users/${user.id}/reactivate`,
+    ).expect(200);
+
+    expect(response.body.isActive).toBe(true);
+    await api()
+      .post('/auth/refresh')
+      .send({ refreshToken: tokens.refreshToken })
+      .expect(401);
+    await logIn(app, 'operator@example.com');
+  });
+
   it('resetting a password ends their sessions', async () => {
     const user = await createUser(app, Role.OPERATOR);
     const tokens = await logIn(app, 'operator@example.com');
@@ -194,12 +257,14 @@ describe('users', () => {
         app,
         `${role.toLowerCase()}@example.com`,
       );
-      const as = (method: 'post' | 'patch', path: string) =>
+      const as = (method: 'get' | 'post' | 'patch', path: string) =>
         api()[method](path).auth(accessToken, { type: 'bearer' });
 
+      await as('get', '/users').expect(403);
       await as('post', '/users').send({}).expect(403);
       await as('patch', `/users/${user.id}/role`).send({}).expect(403);
       await as('post', `/users/${user.id}/deactivate`).expect(403);
+      await as('post', `/users/${user.id}/reactivate`).expect(403);
       await as('post', `/users/${user.id}/reset-password`).send({}).expect(403);
     });
 

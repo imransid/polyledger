@@ -1,0 +1,95 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { z } from 'zod';
+import {
+  ALL_ROLES,
+  type AuthUser,
+  CurrentUser,
+  IdempotencyKey,
+  Roles,
+} from '../auth/decorators.js';
+import { found, listQuery } from '../common/list-query.js';
+import {
+  codeSchema,
+  countSchema,
+  MASTER_DATA_EDITORS,
+  nameSchema,
+} from '../common/master-data.js';
+import { MouldStatus } from '../generated/prisma/client.js';
+import { CreateMouldCommand } from './commands/create-mould.js';
+import { UpdateMouldCommand } from './commands/update-mould.js';
+import { GetMouldQuery } from './queries/get-mould.js';
+import { ListMouldsQuery } from './queries/list-moulds.js';
+
+const mouldBody = z.object({
+  code: codeSchema,
+  name: nameSchema,
+  cavities: countSchema,
+  cycleTimeTenths: countSchema,
+  productId: z.uuid(),
+});
+
+const mouldChanges = mouldBody
+  .omit({ code: true })
+  .extend({ status: z.enum(MouldStatus) })
+  .partial()
+  .strict();
+
+const mouldList = listQuery.extend({
+  status: z.enum(MouldStatus).optional(),
+  productId: z.uuid().optional(),
+});
+
+// Operators read moulds too: they load them on the machines.
+@Roles(...ALL_ROLES)
+@Controller('moulds')
+export class MouldsController {
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
+
+  @Get()
+  list(@Query({ schema: mouldList }) query: z.infer<typeof mouldList>) {
+    return this.queryBus.execute(new ListMouldsQuery(query));
+  }
+
+  @Get(':id')
+  async get(@Param('id', ParseUUIDPipe) id: string) {
+    return found(await this.queryBus.execute(new GetMouldQuery(id)), 'Mould');
+  }
+
+  @Roles(...MASTER_DATA_EDITORS)
+  @Post()
+  create(
+    @CurrentUser() user: AuthUser,
+    @IdempotencyKey() idempotencyKey: string | undefined,
+    @Body({ schema: mouldBody }) body: z.infer<typeof mouldBody>,
+  ) {
+    return this.commandBus.execute(
+      new CreateMouldCommand(user.id, body, idempotencyKey),
+    );
+  }
+
+  @Roles(...MASTER_DATA_EDITORS)
+  @Patch(':id')
+  update(
+    @CurrentUser() user: AuthUser,
+    @IdempotencyKey() idempotencyKey: string | undefined,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body({ schema: mouldChanges }) changes: z.infer<typeof mouldChanges>,
+  ) {
+    return this.commandBus.execute(
+      new UpdateMouldCommand(user.id, id, changes, idempotencyKey),
+    );
+  }
+}

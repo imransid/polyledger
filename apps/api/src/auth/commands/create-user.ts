@@ -1,8 +1,9 @@
 import { ConflictException } from '@nestjs/common';
 import { Command, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { isUniqueViolation } from '../../database/errors.js';
 import { withIdempotencyKey } from '../../database/idempotency.js';
 import { PrismaService } from '../../database/prisma.service.js';
-import { Prisma, type Role } from '../../generated/prisma/client.js';
+import type { Role } from '../../generated/prisma/client.js';
 import { hashPassword } from '../domain/password.js';
 import { userView, type UserView } from '../infra/users.js';
 
@@ -49,10 +50,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
         ),
       );
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (isUniqueViolation(error)) {
         throw new ConflictException('Email or phone already in use');
       }
       throw error;

@@ -4,8 +4,15 @@ import { APP_PIPE } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { AuthModule } from './auth/auth.module.js';
 import { envSchema } from './config/env.js';
+import { CustomersModule } from './customers/customers.module.js';
 import { DatabaseModule } from './database/database.module.js';
+import { FormulasModule } from './formulas/formulas.module.js';
 import { HealthController } from './health/health.controller.js';
+import { MachinesModule } from './machines/machines.module.js';
+import { MaterialsModule } from './materials/materials.module.js';
+import { MouldsModule } from './moulds/moulds.module.js';
+import { ProductsModule } from './products/products.module.js';
+import { SuppliersModule } from './suppliers/suppliers.module.js';
 
 @Module({
   imports: [
@@ -19,6 +26,13 @@ import { HealthController } from './health/health.controller.js';
     CqrsModule.forRoot(),
     DatabaseModule,
     AuthModule,
+    MaterialsModule,
+    ProductsModule,
+    MouldsModule,
+    MachinesModule,
+    CustomersModule,
+    SuppliersModule,
+    FormulasModule,
   ],
   controllers: [HealthController],
   providers: [

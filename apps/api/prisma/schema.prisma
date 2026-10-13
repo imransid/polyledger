@@ -3,6 +3,7 @@ generator client {
   output              = "../src/generated/prisma"
   moduleFormat        = "esm"
   importFileExtension = "js"
+  previewFeatures     = ["partialIndexes"]
 }
 
 datasource db {
@@ -59,4 +60,136 @@ model IdempotencyKey {
 
   @@id([actorId, key])
   @@map("idempotency_keys")
+}
+
+enum RawMaterialType {
+  RESIN
+  MASTERBATCH
+  ADDITIVE
+  REGRIND
+}
+
+model RawMaterial {
+  id                String          @id @default(uuid(7)) @db.Uuid
+  code              String          @unique
+  name              String
+  type              RawMaterialType
+  minimumStockGrams Int             @map("minimum_stock_grams")
+  isActive          Boolean         @default(true) @map("is_active")
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  formulaLines      FormulaLine[]
+
+  @@map("raw_materials")
+}
+
+model Product {
+  id              String           @id @default(uuid(7)) @db.Uuid
+  code            String           @unique
+  name            String
+  pieceWeightMg   Int              @map("piece_weight_mg")
+  colour          String
+  piecesPerCarton Int              @map("pieces_per_carton")
+  isActive        Boolean          @default(true) @map("is_active")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  moulds          Mould[]
+  formulaVersions FormulaVersion[]
+
+  @@map("products")
+}
+
+enum MouldStatus {
+  ACTIVE
+  REPAIR
+  RETIRED
+}
+
+model Mould {
+  id              String      @id @default(uuid(7)) @db.Uuid
+  code            String      @unique
+  name            String
+  cavities        Int
+  /// Tenths of a second: 12.5 s is 125.
+  cycleTimeTenths Int         @map("cycle_time_tenths")
+  productId       String      @map("product_id") @db.Uuid
+  status          MouldStatus @default(ACTIVE)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  product         Product     @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+  @@map("moulds")
+}
+
+enum MachineStatus {
+  ACTIVE
+  REPAIR
+  RETIRED
+}
+
+model Machine {
+  id        String        @id @default(uuid(7)) @db.Uuid
+  code      String        @unique
+  name      String
+  tonnage   Int
+  status    MachineStatus @default(ACTIVE)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("machines")
+}
+
+model Customer {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  code      String   @unique
+  name      String
+  phone     String
+  address   String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("customers")
+}
+
+model Supplier {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  code      String   @unique
+  name      String
+  phone     String
+  address   String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("suppliers")
+}
+
+model FormulaVersion {
+  id               String        @id @default(uuid(7)) @db.Uuid
+  productId        String        @map("product_id") @db.Uuid
+  version          Int
+  /// Runner and rejects together, in basis points: 3.50% is 350.
+  wasteBasisPoints Int           @map("waste_basis_points")
+  isActive         Boolean       @default(false) @map("is_active")
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  product          Product       @relation(fields: [productId], references: [id])
+  lines            FormulaLine[]
+
+  @@unique([productId, version])
+  @@unique([productId], map: "formula_versions_one_active_per_product", where: { isActive: true })
+  @@map("formula_versions")
+}
+
+model FormulaLine {
+  formulaVersionId String         @map("formula_version_id") @db.Uuid
+  rawMaterialId    String         @map("raw_material_id") @db.Uuid
+  /// Share of the piece in basis points: 2.50% is 250. Lines add up to 10000.
+  basisPoints      Int            @map("basis_points")
+  formulaVersion   FormulaVersion @relation(fields: [formulaVersionId], references: [id])
+  rawMaterial      RawMaterial    @relation(fields: [rawMaterialId], references: [id])
+
+  @@id([formulaVersionId, rawMaterialId])
+  @@map("formula_lines")
 }

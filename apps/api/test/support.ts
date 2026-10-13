@@ -17,11 +17,23 @@ export async function startApp(
     imports: [AppModule],
     controllers,
   }).compile();
-  await moduleRef.get(PrismaService)
-    .$executeRaw`TRUNCATE users, refresh_tokens, idempotency_keys`;
+  await clearDatabase(moduleRef.get(PrismaService));
 
   const app = moduleRef.createNestApplication({ logger: false });
   return app.init();
+}
+
+// Every table except Prisma's migration history, so new tables need no edits here.
+function clearDatabase(prisma: PrismaService) {
+  return prisma.$executeRaw`
+    DO $$
+    DECLARE tables text;
+    BEGIN
+      SELECT string_agg(format('%I', tablename), ', ') INTO tables
+      FROM pg_tables
+      WHERE schemaname = 'public' AND tablename <> '_prisma_migrations';
+      EXECUTE 'TRUNCATE ' || tables;
+    END $$`;
 }
 
 export async function createUser(
@@ -51,4 +63,12 @@ export async function logIn(
     .send({ login, password })
     .expect(200);
   return response.body;
+}
+
+export async function tokenFor(
+  app: INestApplication,
+  role: Role,
+): Promise<string> {
+  await createUser(app, role);
+  return (await logIn(app, `${role.toLowerCase()}@example.com`)).accessToken;
 }

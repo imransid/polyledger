@@ -1,8 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { Command, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { phoneSchema } from '../../common/phone.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Role } from '../../generated/prisma/client.js';
-import { emailSchema, phoneSchema } from '../domain/login.js';
+import { emailSchema } from '../domain/login.js';
 import { hashPassword } from '../domain/password.js';
 
 export class SeedOwnerCommand extends Command<void> {

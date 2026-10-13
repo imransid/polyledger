@@ -13,12 +13,14 @@ import { CreateUserHandler } from './commands/create-user.js';
 import { DeactivateUserHandler } from './commands/deactivate-user.js';
 import { LogInHandler } from './commands/log-in.js';
 import { LogOutHandler } from './commands/log-out.js';
+import { ReactivateUserHandler } from './commands/reactivate-user.js';
 import { RefreshSessionHandler } from './commands/refresh-session.js';
 import { ResetUserPasswordHandler } from './commands/reset-user-password.js';
 import { SeedOwnerCommand, SeedOwnerHandler } from './commands/seed-owner.js';
 import { normalizeLogin } from './domain/login.js';
 import { TokenService } from './infra/tokens.js';
 import { GetCurrentUserHandler } from './queries/get-current-user.js';
+import { ListUsersHandler } from './queries/list-users.js';
 import { UsersController } from './users.controller.js';
 
 function byIpAndLogin(request: Record<string, any>): string {
@@ -55,9 +57,11 @@ function byIpAndLogin(request: Record<string, any>): string {
     CreateUserHandler,
     ChangeUserRoleHandler,
     DeactivateUserHandler,
+    ReactivateUserHandler,
     ResetUserPasswordHandler,
     SeedOwnerHandler,
     GetCurrentUserHandler,
+    ListUsersHandler,
   ],
 })
 export class AuthModule implements OnApplicationBootstrap {
