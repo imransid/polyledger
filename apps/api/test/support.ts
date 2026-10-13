@@ -23,12 +23,15 @@ export async function startApp(
   return app.init();
 }
 
-// Every table except Prisma's migration history, so new tables need no edits here.
+// Every table except Prisma's migration history, so new tables need no edits
+// here. Replica mode switches off the trigger that keeps stock_ledger
+// append-only, for this cleanup only.
 function clearDatabase(prisma: PrismaService) {
   return prisma.$executeRaw`
     DO $$
     DECLARE tables text;
     BEGIN
+      PERFORM set_config('session_replication_role', 'replica', true);
       SELECT string_agg(format('%I', tablename), ', ') INTO tables
       FROM pg_tables
       WHERE schemaname = 'public' AND tablename <> '_prisma_migrations';
@@ -71,4 +74,16 @@ export async function tokenFor(
 ): Promise<string> {
   await createUser(app, role);
   return (await logIn(app, `${role.toLowerCase()}@example.com`)).accessToken;
+}
+
+export type Api = ReturnType<typeof apiFor>;
+
+export function apiFor(app: INestApplication, token: string) {
+  const server = () => request(app.getHttpServer());
+  return {
+    get: (path: string) => server().get(path).auth(token, { type: 'bearer' }),
+    post: (path: string) => server().post(path).auth(token, { type: 'bearer' }),
+    patch: (path: string) =>
+      server().patch(path).auth(token, { type: 'bearer' }),
+  };
 }

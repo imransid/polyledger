@@ -65,6 +65,17 @@ export function requiredMaterial({
   };
 }
 
+// What `pieces` finished pieces weigh, rounded half up to whole grams.
+export function gramsForPieces(pieces: number, pieceWeightMg: number): Grams {
+  assertWholeNumber(pieces, 'Pieces', 0);
+  assertWholeNumber(pieceWeightMg, 'Piece weight', 1);
+  const milligrams = BigInt(pieces) * BigInt(pieceWeightMg);
+  const milligramsPerGram = BigInt(MILLIGRAMS_PER_GRAM);
+  return grams(
+    Number((milligrams * 2n + milligramsPerGram) / (milligramsPerGram * 2n)),
+  );
+}
+
 function assertWholeNumber(value: number, label: string, minimum: number) {
   if (!Number.isSafeInteger(value) || value < minimum) {
     throw new RangeError(

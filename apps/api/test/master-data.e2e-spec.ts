@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
-import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ALL_ROLES } from '../src/auth/decorators.js';
 import {
@@ -8,19 +7,7 @@ import {
   MASTER_DATA_READERS,
 } from '../src/common/master-data.js';
 import { Role } from '../src/generated/prisma/client.js';
-import { startApp, tokenFor } from './support.js';
-
-type Api = ReturnType<typeof apiFor>;
-
-function apiFor(app: INestApplication, token: string) {
-  const server = () => request(app.getHttpServer());
-  return {
-    get: (path: string) => server().get(path).auth(token, { type: 'bearer' }),
-    post: (path: string) => server().post(path).auth(token, { type: 'bearer' }),
-    patch: (path: string) =>
-      server().patch(path).auth(token, { type: 'bearer' }),
-  };
-}
+import { type Api, apiFor, startApp, tokenFor } from './support.js';
 
 let productCount = 0;
 
@@ -99,6 +86,16 @@ const resources: Resource[] = [
       address: 'Tejgaon, Dhaka',
     }),
     change: { address: 'Gulshan, Dhaka' },
+    retiredBy: 'deactivate',
+  },
+  {
+    path: '/locations',
+    readers: MASTER_DATA_READERS,
+    fields: async () => ({
+      name: 'Second raw material store',
+      kind: 'RAW_MATERIAL_STORE',
+    }),
+    change: { name: 'Store B' },
     retiredBy: 'deactivate',
   },
   {
@@ -262,38 +259,41 @@ describe.each(resources)('$path', (resource) => {
   });
 });
 
-describe.each(['/raw-materials', '/products', '/customers', '/suppliers'])(
-  '%s',
-  (path) => {
-    let app: INestApplication;
-    let owner: Api;
+describe.each([
+  '/raw-materials',
+  '/products',
+  '/customers',
+  '/suppliers',
+  '/locations',
+])('%s', (path) => {
+  let app: INestApplication;
+  let owner: Api;
 
-    beforeEach(async () => {
-      app = await startApp();
-      owner = apiFor(app, await tokenFor(app, Role.OWNER));
-    });
+  beforeEach(async () => {
+    app = await startApp();
+    owner = apiFor(app, await tokenFor(app, Role.OWNER));
+  });
 
-    afterEach(async () => {
-      await app.close();
-    });
+  afterEach(async () => {
+    await app.close();
+  });
 
-    it('deactivates and reactivates', async () => {
-      const resource = resources.find((r) => r.path === path)!;
-      const body = { code: 'AB-01', ...(await resource.fields(owner)) };
-      const created = (await owner.post(path).send(body).expect(201)).body;
+  it('deactivates and reactivates', async () => {
+    const resource = resources.find((r) => r.path === path)!;
+    const body = { code: 'AB-01', ...(await resource.fields(owner)) };
+    const created = (await owner.post(path).send(body).expect(201)).body;
 
-      const deactivated = await owner
-        .post(`${path}/${created.id}/deactivate`)
-        .expect(200);
-      expect(deactivated.body.isActive).toBe(false);
+    const deactivated = await owner
+      .post(`${path}/${created.id}/deactivate`)
+      .expect(200);
+    expect(deactivated.body.isActive).toBe(false);
 
-      const reactivated = await owner
-        .post(`${path}/${created.id}/reactivate`)
-        .expect(200);
-      expect(reactivated.body.isActive).toBe(true);
-    });
-  },
-);
+    const reactivated = await owner
+      .post(`${path}/${created.id}/reactivate`)
+      .expect(200);
+    expect(reactivated.body.isActive).toBe(true);
+  });
+});
 
 describe.each(['/customers', '/suppliers'])('%s phone numbers', (path) => {
   let app: INestApplication;

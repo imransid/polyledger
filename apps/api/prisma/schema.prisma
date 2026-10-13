@@ -19,16 +19,18 @@ enum Role {
 }
 
 model User {
-  id            String         @id @default(uuid(7)) @db.Uuid
-  name          String
-  email         String?        @unique
-  phone         String?        @unique
-  passwordHash  String         @map("password_hash")
-  role          Role
-  isActive      Boolean        @default(true) @map("is_active")
-  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
-  refreshTokens RefreshToken[]
+  id                 String             @id @default(uuid(7)) @db.Uuid
+  name               String
+  email              String?            @unique
+  phone              String?            @unique
+  passwordHash       String             @map("password_hash")
+  role               Role
+  isActive           Boolean            @default(true) @map("is_active")
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  refreshTokens      RefreshToken[]
+  stockDocuments     StockDocument[]
+  stockLedgerEntries StockLedgerEntry[]
 
   @@map("users")
 }
@@ -163,6 +165,8 @@ model Supplier {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
+  receipts StockDocument[]
+
   @@map("suppliers")
 }
 
@@ -192,4 +196,126 @@ model FormulaLine {
 
   @@id([formulaVersionId, rawMaterialId])
   @@map("formula_lines")
+}
+
+enum LocationKind {
+  RAW_MATERIAL_STORE
+  PRODUCTION_FLOOR
+  FINISHED_GOODS_STORE
+  SCRAP_YARD
+}
+
+model Location {
+  id            String             @id @default(uuid(7)) @db.Uuid
+  code          String             @unique
+  name          String
+  kind          LocationKind
+  isActive      Boolean            @default(true) @map("is_active")
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  balances      StockBalance[]
+  ledgerEntries StockLedgerEntry[]
+
+  @@map("locations")
+}
+
+enum StockDocumentKind {
+  RECEIPT
+  TRANSFER
+  ADJUSTMENT
+  OPENING
+  REVERSAL
+}
+
+enum StockItemType {
+  RAW_MATERIAL
+  PRODUCT
+}
+
+model StockDocument {
+  id                String             @id @default(uuid(7)) @db.Uuid
+  number            String             @unique
+  kind              StockDocumentKind
+  supplierId        String?            @map("supplier_id") @db.Uuid
+  /// Supplier challan or invoice number, receipts only.
+  supplierReference String?            @map("supplier_reference")
+  receivedOn        DateTime?          @map("received_on") @db.Date
+  reason            String?
+  reversesId        String?            @unique @map("reverses_id") @db.Uuid
+  reversedAt        DateTime?          @map("reversed_at") @db.Timestamptz(3)
+  postedById        String             @map("posted_by_id") @db.Uuid
+  postedAt          DateTime           @default(now()) @map("posted_at") @db.Timestamptz(3)
+  supplier          Supplier?          @relation(fields: [supplierId], references: [id])
+  postedBy          User               @relation(fields: [postedById], references: [id])
+  reverses          StockDocument?     @relation("DocumentReversal", fields: [reversesId], references: [id])
+  reversedBy        StockDocument?     @relation("DocumentReversal")
+  entries           StockLedgerEntry[]
+  receiptLines      ReceiptLine[]
+
+  @@unique([supplierId, supplierReference], map: "stock_documents_one_open_receipt_per_challan", where: { kind: "RECEIPT", reversedAt: null })
+  @@index([kind, postedAt])
+  @@map("stock_documents")
+}
+
+model ReceiptLine {
+  documentId    String        @map("document_id") @db.Uuid
+  rawMaterialId String        @map("raw_material_id") @db.Uuid
+  /// What the supplier billed.
+  challanGrams  Int           @map("challan_grams")
+  /// What our scale showed; only this goes into stock.
+  receivedGrams Int           @map("received_grams")
+  document      StockDocument @relation(fields: [documentId], references: [id])
+
+  @@id([documentId, rawMaterialId])
+  @@map("receipt_lines")
+}
+
+/// Append-only: database triggers refuse UPDATE, DELETE and TRUNCATE.
+model StockLedgerEntry {
+  id           Int               @id @default(autoincrement())
+  documentId   String            @map("document_id") @db.Uuid
+  itemType     StockItemType     @map("item_type")
+  itemId       String            @map("item_id") @db.Uuid
+  locationId   String            @map("location_id") @db.Uuid
+  movementType StockDocumentKind @map("movement_type")
+  grams        Int
+  /// Products only.
+  pieces       Int?
+  reversalOfId Int?              @unique @map("reversal_of_id")
+  postedById   String            @map("posted_by_id") @db.Uuid
+  postedAt     DateTime          @map("posted_at") @db.Timestamptz(3)
+  document     StockDocument     @relation(fields: [documentId], references: [id])
+  location     Location          @relation(fields: [locationId], references: [id])
+  postedBy     User              @relation(fields: [postedById], references: [id])
+  reversalOf   StockLedgerEntry? @relation("EntryReversal", fields: [reversalOfId], references: [id])
+  reversedBy   StockLedgerEntry? @relation("EntryReversal")
+
+  @@index([itemType, itemId, locationId])
+  @@index([documentId])
+  @@map("stock_ledger")
+}
+
+/// Running totals of stock_ledger, changed only in the same transaction as
+/// the ledger rows. Stock checks lock these rows.
+model StockBalance {
+  itemType   StockItemType @map("item_type")
+  itemId     String        @map("item_id") @db.Uuid
+  locationId String        @map("location_id") @db.Uuid
+  grams      BigInt        @default(0)
+  pieces     BigInt        @default(0)
+  updatedAt  DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  location   Location      @relation(fields: [locationId], references: [id])
+
+  @@id([itemType, itemId, locationId])
+  @@map("stock_balances")
+}
+
+model OutboxEvent {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  type        String
+  payload     Json
+  occurredAt  DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  publishedAt DateTime? @map("published_at") @db.Timestamptz(3)
+
+  @@map("outbox")
 }

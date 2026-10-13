@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { requiredMaterial } from './material-requirement.js';
+import { gramsForPieces, requiredMaterial } from './material-requirement.js';
 
 describe('requiredMaterial', () => {
   it('adds waste on top of the net weight', () => {
@@ -146,5 +146,32 @@ describe('requiredMaterial', () => {
         lineBasisPoints: [10_000],
       }),
     ).toThrow('Pieces must be a whole number of at least 0');
+  });
+});
+
+describe('gramsForPieces', () => {
+  it.each([
+    [1, 2_500, 3],
+    [2, 2_500, 5],
+    [3, 2_500, 8],
+    [1, 499, 0],
+    [0, 2_500, 0],
+    [1_000, 2_499, 2_499],
+  ])('%d pieces of %d mg weigh %d g', (pieces, pieceWeightMg, expected) => {
+    expect(gramsForPieces(pieces, pieceWeightMg)).toBe(expected);
+  });
+
+  it('stays exact beyond the floating point range', () => {
+    expect(gramsForPieces(2_000_000_000, 2_000_000_001)).toBe(
+      4_000_000_002_000_000,
+    );
+  });
+
+  it.each([
+    [-1, 2_500],
+    [1.5, 2_500],
+    [1, 0],
+  ])('rejects %d pieces of %d mg', (pieces, pieceWeightMg) => {
+    expect(() => gramsForPieces(pieces, pieceWeightMg)).toThrow(RangeError);
   });
 });

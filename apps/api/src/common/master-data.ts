@@ -3,6 +3,7 @@ import { isGrams } from '@polyledger/shared';
 import { z } from 'zod';
 import { isUniqueViolation } from '../database/errors.js';
 import { Role } from '../generated/prisma/client.js';
+import { INT_MAX } from './quantities.js';
 
 export const MASTER_DATA_EDITORS: Role[] = [Role.OWNER, Role.MANAGER];
 export const MASTER_DATA_READERS: Role[] = [
@@ -10,9 +11,6 @@ export const MASTER_DATA_READERS: Role[] = [
   Role.STOREKEEPER,
   Role.SUPERVISOR,
 ];
-
-// Postgres integer columns.
-const INT_MAX = 2_147_483_647;
 
 export const codeSchema = z
   .string()
