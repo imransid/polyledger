@@ -8,11 +8,13 @@
   "scripts": {
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
-    "dev:api": "pnpm --filter @polyledger/shared build && pnpm --filter @polyledger/api start:dev",
+    "dev:api": "pnpm --filter @polyledger/shared build && pnpm --parallel --filter @polyledger/shared --filter @polyledger/api dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
-    "format": "prettier --write ."
+    "prepare": "git config core.hooksPath .githooks",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "prettier": "^3.9.10"

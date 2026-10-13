@@ -2,8 +2,12 @@ packages:
   - apps/*
   - packages/*
 
-# Optional native extras pulled in by Testcontainers; not needed.
 allowBuilds:
+  # Downloads the schema engine binary that prisma migrate runs.
+  '@prisma/engines': true
+  # Only checks the Node version.
+  prisma: false
+  # Optional native extras pulled in by Testcontainers.
   cpu-features: false
   protobufjs: false
   ssh2: false

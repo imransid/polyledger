@@ -5,7 +5,7 @@ Tracks every gram of plastic from raw material to dispatch.
 
 ## Stack
 
-- apps/api: NestJS + @nestjs/cqrs, PostgreSQL, Drizzle ORM, BullMQ + Redis
+- apps/api: NestJS + @nestjs/cqrs, PostgreSQL, Prisma ORM, BullMQ + Redis
 - apps/tablet: React Native (Android) + WatermelonDB, offline-first
 - apps/office: React (Vite)
 - packages/shared: shared types and helpers
@@ -16,7 +16,9 @@ Tracks every gram of plastic from raw material to dispatch.
 - pnpm db:up / pnpm db:down
 - pnpm dev:api
 - pnpm --filter api test
-- pnpm --filter api drizzle-kit generate
+- pnpm --filter api exec prisma migrate dev --name <change>
+- pnpm --filter api exec prisma migrate deploy
+- pnpm --filter api exec prisma generate
 
 ## Git
 
@@ -31,6 +33,11 @@ Tracks every gram of plastic from raw material to dispatch.
   reversal entry.
 - Stock checks and reservations read live data inside a transaction with
   SELECT ... FOR UPDATE. Never from a read model or cache.
+- Stock checks and reservations use $queryRaw with SELECT ... FOR UPDATE
+  inside an interactive transaction. Tagged template only, never
+  $queryRawUnsafe.
+- Quantity columns are Int (grams). Totals are summed in SQL as bigint and
+  converted with a safe-integer check.
 - Every write goes through a command handler. Every command accepts an
   idempotency key.
 - Events are written to the outbox table in the same transaction. Never
