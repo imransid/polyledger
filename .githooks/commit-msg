@@ -1,0 +1,21 @@
+#!/bin/sh
+set -eu
+
+message_file="$1"
+cleaned_file="$(mktemp)"
+trap 'rm -f "$cleaned_file"' EXIT
+
+awk '
+  { line = tolower($0) }
+  line ~ /^[[:space:]]*co-authored-by:.*claude/ { next }
+  line ~ /^[[:space:]]*claude-session:/ { next }
+  line ~ /generated with \[?claude code/ { next }
+  line ~ /^[[:space:]]*$/ && previous_blank { next }
+  { lines[++count] = $0; previous_blank = (line ~ /^[[:space:]]*$/) }
+  END {
+    while (count > 0 && lines[count] ~ /^[[:space:]]*$/) count--
+    for (i = 1; i <= count; i++) print lines[i]
+  }
+' "$message_file" > "$cleaned_file"
+
+cat "$cleaned_file" > "$message_file"

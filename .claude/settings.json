@@ -1,0 +1,16 @@
+{
+    "attribution": {
+      "commit": "",
+      "pr": ""
+    },
+    "permissions": {
+      "deny": [
+        "Bash(git commit:*)",
+        "Bash(git push:*)",
+        "Bash(git rebase:*)",
+        "Bash(git reset --hard:*)",
+        "Read(./.env)",
+        "Read(./**/.env)"
+      ]
+    }
+  }
