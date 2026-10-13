@@ -9,7 +9,13 @@ import { HealthController } from './health/health.controller.js';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: envSchema,
+      // Tests take their environment from vitest.config.ts, never from a
+      // developer's .env (which may seed an OWNER, for example).
+      ignoreEnvFile: process.env.NODE_ENV === 'test',
+    }),
     CqrsModule.forRoot(),
     DatabaseModule,
     AuthModule,

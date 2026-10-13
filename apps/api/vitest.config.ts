@@ -7,6 +7,7 @@ export default defineConfig({
     // Test files share one database and clear its tables between tests.
     fileParallelism: false,
     env: {
+      NODE_ENV: 'test',
       JWT_SECRET: 'test-only-jwt-secret-0123456789abcdef',
       REFRESH_TOKEN_SECRET: 'test-only-refresh-secret-0123456789abcdef',
     },
