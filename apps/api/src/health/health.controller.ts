@@ -4,7 +4,7 @@ import {
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { Public } from '../auth/public.decorator.js';
+import { Public } from '../auth/decorators.js';
 import { PrismaService } from '../database/prisma.service.js';
 
 @Controller('health')

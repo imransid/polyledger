@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_PIPE } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
-import { AccessGuard } from './auth/access.guard.js';
+import { AuthModule } from './auth/auth.module.js';
 import { envSchema } from './config/env.js';
 import { DatabaseModule } from './database/database.module.js';
 import { HealthController } from './health/health.controller.js';
@@ -12,8 +12,11 @@ import { HealthController } from './health/health.controller.js';
     ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
     CqrsModule.forRoot(),
     DatabaseModule,
+    AuthModule,
   ],
   controllers: [HealthController],
-  providers: [{ provide: APP_GUARD, useClass: AccessGuard }],
+  providers: [
+    { provide: APP_PIPE, useValue: new StandardSchemaValidationPipe() },
+  ],
 })
 export class AppModule {}
