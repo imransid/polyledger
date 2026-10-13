@@ -5,7 +5,9 @@ import type { Prisma } from '../generated/prisma/client.js';
 export function recordEvent(
   tx: Prisma.TransactionClient,
   type: string,
-  payload: Prisma.InputJsonValue,
+  payload: object,
 ) {
-  return tx.outboxEvent.create({ data: { type, payload } });
+  return tx.outboxEvent.create({
+    data: { type, payload: JSON.parse(JSON.stringify(payload)) },
+  });
 }

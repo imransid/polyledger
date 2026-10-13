@@ -31,6 +31,7 @@ model User {
   refreshTokens      RefreshToken[]
   stockDocuments     StockDocument[]
   stockLedgerEntries StockLedgerEntry[]
+  salesOrders        SalesOrder[]
 
   @@map("users")
 }
@@ -97,6 +98,7 @@ model Product {
   updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
   moulds          Mould[]
   formulaVersions FormulaVersion[]
+  salesOrderLines SalesOrderLine[]
 
   @@map("products")
 }
@@ -151,6 +153,8 @@ model Customer {
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  salesOrders SalesOrder[]
 
   @@map("customers")
 }
@@ -318,4 +322,49 @@ model OutboxEvent {
   publishedAt DateTime? @map("published_at") @db.Timestamptz(3)
 
   @@map("outbox")
+}
+
+enum SalesOrderStatus {
+  DRAFT
+  CONFIRMED
+  IN_PRODUCTION
+  COMPLETED
+  CANCELLED
+}
+
+model SalesOrder {
+  id           String           @id @default(uuid(7)) @db.Uuid
+  number       String           @unique
+  customerId   String           @map("customer_id") @db.Uuid
+  orderDate    DateTime         @map("order_date") @db.Date
+  deliveryDate DateTime         @map("delivery_date") @db.Date
+  customerPo   String?          @map("customer_po")
+  notes        String?
+  status       SalesOrderStatus @default(DRAFT)
+  cancelReason String?          @map("cancel_reason")
+  createdById  String           @map("created_by_id") @db.Uuid
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  customer     Customer         @relation(fields: [customerId], references: [id])
+  createdBy    User             @relation(fields: [createdById], references: [id])
+  lines        SalesOrderLine[]
+
+  @@index([status, deliveryDate])
+  @@index([customerId])
+  @@map("sales_orders")
+}
+
+model SalesOrderLine {
+  orderId         String     @map("order_id") @db.Uuid
+  lineNo          Int        @map("line_no")
+  productId       String     @map("product_id") @db.Uuid
+  pieces          Int
+  /// BDT x 100.
+  unitPricePoisha Int?       @map("unit_price_poisha")
+  order           SalesOrder @relation(fields: [orderId], references: [id])
+  product         Product    @relation(fields: [productId], references: [id])
+
+  @@id([orderId, lineNo])
+  @@unique([orderId, productId])
+  @@map("sales_order_lines")
 }

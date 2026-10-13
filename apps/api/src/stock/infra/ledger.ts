@@ -1,6 +1,7 @@
 import { ConflictException } from '@nestjs/common';
 import { grams } from '@polyledger/shared';
 import { toSafeNumber } from '../../common/quantities.js';
+import { nextNumber } from '../../database/numbers.js';
 import { recordEvent } from '../../database/outbox.js';
 import {
   Prisma,
@@ -59,7 +60,11 @@ export async function postDocument(
   header: Omit<Prisma.StockDocumentUncheckedCreateInput, 'number'>,
   movements: Movement[],
 ): Promise<{ document: StockDocument; entries: StockLedgerEntry[] }> {
-  const number = await nextDocumentNumber(tx, header.kind);
+  const number = await nextNumber(
+    tx,
+    `stock_document_number_${header.kind.toLowerCase()}`,
+    NUMBER_PREFIX[header.kind],
+  );
   const document = await tx.stockDocument.create({
     data: { ...header, number },
   });
@@ -77,16 +82,6 @@ export async function postDocument(
     })),
   });
   return { document, entries };
-}
-
-async function nextDocumentNumber(
-  tx: Prisma.TransactionClient,
-  kind: StockDocumentKind,
-): Promise<string> {
-  const sequence = `stock_document_number_${kind.toLowerCase()}`;
-  const [{ value }] = await tx.$queryRaw<{ value: bigint }[]>`
-    SELECT nextval(${sequence}::regclass) AS value`;
-  return `${NUMBER_PREFIX[kind]}-${value.toString().padStart(6, '0')}`;
 }
 
 async function postMovements(
