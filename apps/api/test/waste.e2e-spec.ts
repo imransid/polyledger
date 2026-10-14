@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ALL_ROLES } from '../src/auth/decorators.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { Role } from '../src/generated/prisma/client.js';
+import { wasteReportResponse } from '../src/production/responses.js';
 import { type Api, apiFor, startApp, tokenFor } from './support.js';
 
 const { OWNER, MANAGER, SUPERVISOR, STOREKEEPER, OPERATOR } = Role;
@@ -486,7 +487,9 @@ describe('waste', () => {
     };
 
     it('reports waste by machine, mould, product and shift', async () => {
-      expect((await wasteReport('machine').expect(200)).body).toEqual([
+      const byMachine = (await wasteReport('machine').expect(200)).body;
+      wasteReportResponse.parse(byMachine);
+      expect(byMachine).toEqual([
         { key: machine1, label: 'IM-01', ...first },
         { key: machine2, label: 'IM-02', ...second },
       ]);

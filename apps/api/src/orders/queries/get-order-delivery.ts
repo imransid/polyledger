@@ -6,6 +6,7 @@ import {
 } from '@nestjs/cqrs';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { SalesOrderStatus } from '../../generated/prisma/client.js';
+import { deliveryLimit } from '../domain/deliveries.js';
 import { productCodes } from '../infra/references.js';
 import { withLines } from '../infra/views.js';
 
@@ -25,6 +26,8 @@ export interface OrderDelivery {
     /** Every piece sent back, whether replaced or credited. */
     returnedPieces: number;
     remainingPieces: number;
+    /** The most the next challan may carry, the tolerance included. */
+    allowedPieces: number;
   }[];
 }
 
@@ -69,6 +72,11 @@ export class GetOrderDeliveryHandler implements IQueryHandler<GetOrderDeliveryQu
         deliveredPieces: line.deliveredPieces,
         returnedPieces: line.returnedPieces,
         remainingPieces: Math.max(0, line.pieces - line.deliveredPieces),
+        allowedPieces: Math.max(
+          0,
+          deliveryLimit(line.pieces, order.overDeliveryBasisPoints) -
+            line.deliveredPieces,
+        ),
       })),
     };
   }

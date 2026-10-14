@@ -1332,6 +1332,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/dispatch/challans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DispatchController_challan"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/dispatch/gate-passes/pending": {
         parameters: {
             query?: never;
@@ -1406,6 +1422,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["DispatchController_reverseReturn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/company": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SettingsController_company"];
+        put: operations["SettingsController_saveCompany"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1556,7 +1588,7 @@ export interface operations {
                         email: string | null;
                         phone: string | null;
                         /** @enum {string} */
-                        role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR";
+                        role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR" | "GUARD";
                         isActive: boolean;
                         /** Format: date-time */
                         createdAt: string;
@@ -1621,7 +1653,7 @@ export interface operations {
                             email: string | null;
                             phone: string | null;
                             /** @enum {string} */
-                            role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR";
+                            role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR" | "GUARD";
                             isActive: boolean;
                             /** Format: date-time */
                             createdAt: string;
@@ -1650,7 +1682,7 @@ export interface operations {
                     email?: string;
                     phone?: string;
                     /** @enum {string} */
-                    role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR";
+                    role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR" | "GUARD";
                     password: string;
                 };
             };
@@ -1668,7 +1700,7 @@ export interface operations {
                         email: string | null;
                         phone: string | null;
                         /** @enum {string} */
-                        role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR";
+                        role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR" | "GUARD";
                         isActive: boolean;
                         /** Format: date-time */
                         createdAt: string;
@@ -1715,7 +1747,7 @@ export interface operations {
             content: {
                 "application/json": {
                     /** @enum {string} */
-                    role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR";
+                    role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR" | "GUARD";
                 };
             };
         };
@@ -1732,7 +1764,7 @@ export interface operations {
                         email: string | null;
                         phone: string | null;
                         /** @enum {string} */
-                        role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR";
+                        role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR" | "GUARD";
                         isActive: boolean;
                         /** Format: date-time */
                         createdAt: string;
@@ -1766,7 +1798,7 @@ export interface operations {
                         email: string | null;
                         phone: string | null;
                         /** @enum {string} */
-                        role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR";
+                        role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR" | "GUARD";
                         isActive: boolean;
                         /** Format: date-time */
                         createdAt: string;
@@ -1800,7 +1832,7 @@ export interface operations {
                         email: string | null;
                         phone: string | null;
                         /** @enum {string} */
-                        role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR";
+                        role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR" | "GUARD";
                         isActive: boolean;
                         /** Format: date-time */
                         createdAt: string;
@@ -4524,6 +4556,7 @@ export interface operations {
                             deliveredPieces: number;
                             returnedPieces: number;
                             remainingPieces: number;
+                            allowedPieces: number;
                         }[];
                     };
                 };
@@ -6017,7 +6050,19 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        key: string;
+                        label: string;
+                        runnerGrams: number;
+                        rejectGrams: number;
+                        purgeGrams: number;
+                        sweepingsGrams: number;
+                        wasteGrams: number;
+                        materialUsedGrams: number;
+                        wasteBasisPoints: number | null;
+                    }[];
+                };
             };
         };
     };
@@ -6050,7 +6095,59 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** @enum {string} */
+                        kind: "RECEIPT" | "TRANSFER" | "ADJUSTMENT" | "OPENING" | "REVERSAL" | "ISSUE" | "PRODUCTION" | "HANDOVER" | "RETURN" | "WASTE" | "GRINDING" | "SCRAP_SALE" | "SCRAP_TRANSFER" | "DISPATCH" | "CUSTOMER_RETURN";
+                        /** Format: uuid */
+                        supplierId: string | null;
+                        supplierReference: string | null;
+                        /** Format: date-time */
+                        receivedOn: string | null;
+                        reason: string | null;
+                        /** Format: uuid */
+                        reversesId: string | null;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        jobCardId: string | null;
+                        /** Format: uuid */
+                        postedById: string;
+                        /** Format: date-time */
+                        postedAt: string;
+                        entries: {
+                            id: number;
+                            /** Format: uuid */
+                            documentId: string;
+                            /** @enum {string} */
+                            itemType: "RAW_MATERIAL" | "PRODUCT";
+                            /** Format: uuid */
+                            itemId: string;
+                            /** Format: uuid */
+                            locationId: string;
+                            /** @enum {string} */
+                            movementType: "RECEIPT" | "TRANSFER" | "ADJUSTMENT" | "OPENING" | "REVERSAL" | "ISSUE" | "PRODUCTION" | "HANDOVER" | "RETURN" | "WASTE" | "GRINDING" | "SCRAP_SALE" | "SCRAP_TRANSFER" | "DISPATCH" | "CUSTOMER_RETURN";
+                            grams: number;
+                            pieces: number | null;
+                            reversalOfId: number | null;
+                            /** Format: uuid */
+                            postedById: string;
+                            /** Format: date-time */
+                            postedAt: string;
+                        }[];
+                        receiptLines: {
+                            /** Format: uuid */
+                            documentId: string;
+                            /** Format: uuid */
+                            rawMaterialId: string;
+                            challanGrams: number;
+                            receivedGrams: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -6070,7 +6167,45 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        totals: {
+                            batches: number;
+                            inputGrams: number;
+                            outputGrams: number;
+                            lossGrams: number;
+                            lossBasisPoints: number | null;
+                        };
+                        batches: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            stockDocumentId: string;
+                            /** Format: uuid */
+                            scrapLocationId: string;
+                            /** Format: uuid */
+                            storeLocationId: string;
+                            /** @enum {string} */
+                            inputItemType: "RAW_MATERIAL" | "PRODUCT";
+                            /** Format: uuid */
+                            inputItemId: string;
+                            inputPieces: number | null;
+                            inputGrams: number;
+                            /** Format: uuid */
+                            outputMaterialId: string;
+                            outputGrams: number;
+                            lossGrams: number;
+                            /** Format: date */
+                            groundOn: string;
+                            /** Format: date-time */
+                            reversedAt: string | null;
+                            /** Format: uuid */
+                            recordedById: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -6112,7 +6247,36 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: uuid */
+                        scrapLocationId: string;
+                        /** Format: uuid */
+                        storeLocationId: string;
+                        /** @enum {string} */
+                        inputItemType: "RAW_MATERIAL" | "PRODUCT";
+                        /** Format: uuid */
+                        inputItemId: string;
+                        inputPieces: number | null;
+                        inputGrams: number;
+                        /** Format: uuid */
+                        outputMaterialId: string;
+                        outputGrams: number;
+                        lossGrams: number;
+                        /** Format: date */
+                        groundOn: string;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                    };
+                };
             };
         };
     };
@@ -6137,7 +6301,36 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: uuid */
+                        scrapLocationId: string;
+                        /** Format: uuid */
+                        storeLocationId: string;
+                        /** @enum {string} */
+                        inputItemType: "RAW_MATERIAL" | "PRODUCT";
+                        /** Format: uuid */
+                        inputItemId: string;
+                        inputPieces: number | null;
+                        inputGrams: number;
+                        /** Format: uuid */
+                        outputMaterialId: string;
+                        outputGrams: number;
+                        lossGrams: number;
+                        /** Format: date */
+                        groundOn: string;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                    };
+                };
             };
         };
     };
@@ -6157,7 +6350,46 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        totals: {
+                            sales: number;
+                            grams: number;
+                            amountPoisha: number;
+                        };
+                        sales: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            stockDocumentId: string;
+                            buyerName: string;
+                            /** Format: date */
+                            soldOn: string;
+                            /** Format: uuid */
+                            scrapLocationId: string;
+                            /** Format: date-time */
+                            reversedAt: string | null;
+                            /** Format: uuid */
+                            recordedById: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            lines: {
+                                /** Format: uuid */
+                                saleId: string;
+                                lineNo: number;
+                                /** @enum {string} */
+                                itemType: "RAW_MATERIAL" | "PRODUCT";
+                                /** Format: uuid */
+                                itemId: string;
+                                pieces: number | null;
+                                grams: number;
+                                pricePerKgPoisha: number;
+                                amountPoisha: number;
+                            }[];
+                            amountPoisha: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -6199,7 +6431,39 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        buyerName: string;
+                        /** Format: date */
+                        soldOn: string;
+                        /** Format: uuid */
+                        scrapLocationId: string;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            saleId: string;
+                            lineNo: number;
+                            /** @enum {string} */
+                            itemType: "RAW_MATERIAL" | "PRODUCT";
+                            /** Format: uuid */
+                            itemId: string;
+                            pieces: number | null;
+                            grams: number;
+                            pricePerKgPoisha: number;
+                            amountPoisha: number;
+                        }[];
+                        amountPoisha: number;
+                    };
+                };
             };
         };
     };
@@ -6224,17 +6488,52 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        buyerName: string;
+                        /** Format: date */
+                        soldOn: string;
+                        /** Format: uuid */
+                        scrapLocationId: string;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            saleId: string;
+                            lineNo: number;
+                            /** @enum {string} */
+                            itemType: "RAW_MATERIAL" | "PRODUCT";
+                            /** Format: uuid */
+                            itemId: string;
+                            pieces: number | null;
+                            grams: number;
+                            pricePerKgPoisha: number;
+                            amountPoisha: number;
+                        }[];
+                        amountPoisha: number;
+                    };
+                };
             };
         };
     };
     DispatchController_challans: {
         parameters: {
             query?: {
+                page?: number;
+                pageSize?: number;
                 orderId?: string;
                 customerId?: string;
                 from?: string;
                 to?: string;
+                gatePass?: "PENDING" | "PASSED";
             };
             header?: never;
             path?: never;
@@ -6248,60 +6547,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** Format: uuid */
-                        id: string;
-                        number: string;
-                        /** Format: uuid */
-                        stockDocumentId: string;
-                        /** Format: uuid */
-                        orderId: string;
-                        /** Format: uuid */
-                        customerId: string;
-                        /** Format: uuid */
-                        fromLocationId: string;
-                        vehicleNumber: string;
-                        driverName: string;
-                        driverPhone: string;
-                        deliveryAddress: string;
-                        notes: string | null;
-                        /** Format: date */
-                        dispatchedOn: string;
-                        /** @enum {string} */
-                        gatePassStatus: "PENDING" | "PASSED";
-                        /** Format: date-time */
-                        gatePassedAt: string | null;
-                        /** Format: uuid */
-                        gatePassedById: string | null;
-                        /** Format: date-time */
-                        reversedAt: string | null;
-                        /** Format: uuid */
-                        recordedById: string;
-                        /** Format: date-time */
-                        createdAt: string;
-                        lines: {
-                            /** Format: uuid */
-                            challanId: string;
-                            /** Format: uuid */
-                            productId: string;
-                            pieces: number;
-                            returnedPieces: number;
-                        }[];
-                        returns: {
+                        items: {
                             /** Format: uuid */
                             id: string;
                             number: string;
                             /** Format: uuid */
                             stockDocumentId: string;
                             /** Format: uuid */
-                            challanId: string;
+                            orderId: string;
                             /** Format: uuid */
-                            toLocationId: string;
-                            /** @enum {string} */
-                            reason: "DAMAGED" | "WRONG_ITEM" | "QUALITY";
-                            /** @enum {string} */
-                            settlement: "REPLACE" | "CREDIT";
+                            customerId: string;
+                            /** Format: uuid */
+                            fromLocationId: string;
+                            vehicleNumber: string;
+                            driverName: string;
+                            driverPhone: string;
+                            deliveryAddress: string;
+                            notes: string | null;
                             /** Format: date */
-                            returnedOn: string;
+                            dispatchedOn: string;
+                            /** @enum {string} */
+                            gatePassStatus: "PENDING" | "PASSED";
+                            /** Format: date-time */
+                            gatePassedAt: string | null;
+                            /** Format: uuid */
+                            gatePassedById: string | null;
                             /** Format: date-time */
                             reversedAt: string | null;
                             /** Format: uuid */
@@ -6310,13 +6580,54 @@ export interface operations {
                             createdAt: string;
                             lines: {
                                 /** Format: uuid */
-                                returnId: string;
+                                challanId: string;
                                 /** Format: uuid */
                                 productId: string;
                                 pieces: number;
+                                returnedPieces: number;
+                                code: string;
+                                name: string;
+                                piecesPerCarton: number;
                             }[];
+                            returns: {
+                                /** Format: uuid */
+                                id: string;
+                                number: string;
+                                /** Format: uuid */
+                                stockDocumentId: string;
+                                /** Format: uuid */
+                                challanId: string;
+                                /** Format: uuid */
+                                toLocationId: string;
+                                /** @enum {string} */
+                                reason: "DAMAGED" | "WRONG_ITEM" | "QUALITY";
+                                /** @enum {string} */
+                                settlement: "REPLACE" | "CREDIT";
+                                /** Format: date */
+                                returnedOn: string;
+                                /** Format: date-time */
+                                reversedAt: string | null;
+                                /** Format: uuid */
+                                recordedById: string;
+                                /** Format: date-time */
+                                createdAt: string;
+                                lines: {
+                                    /** Format: uuid */
+                                    returnId: string;
+                                    /** Format: uuid */
+                                    productId: string;
+                                    pieces: number;
+                                }[];
+                            }[];
+                            customerCode: string;
+                            customerName: string;
+                            orderNumber: string;
+                            customerPo: string | null;
                         }[];
-                    }[];
+                        total: number;
+                        page: number;
+                        pageSize: number;
+                    };
                 };
             };
         };
@@ -6433,6 +6744,103 @@ export interface operations {
             };
         };
     };
+    DispatchController_challan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: uuid */
+                        orderId: string;
+                        /** Format: uuid */
+                        customerId: string;
+                        /** Format: uuid */
+                        fromLocationId: string;
+                        vehicleNumber: string;
+                        driverName: string;
+                        driverPhone: string;
+                        deliveryAddress: string;
+                        notes: string | null;
+                        /** Format: date */
+                        dispatchedOn: string;
+                        /** @enum {string} */
+                        gatePassStatus: "PENDING" | "PASSED";
+                        /** Format: date-time */
+                        gatePassedAt: string | null;
+                        /** Format: uuid */
+                        gatePassedById: string | null;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            challanId: string;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                            returnedPieces: number;
+                            code: string;
+                            name: string;
+                            piecesPerCarton: number;
+                        }[];
+                        returns: {
+                            /** Format: uuid */
+                            id: string;
+                            number: string;
+                            /** Format: uuid */
+                            stockDocumentId: string;
+                            /** Format: uuid */
+                            challanId: string;
+                            /** Format: uuid */
+                            toLocationId: string;
+                            /** @enum {string} */
+                            reason: "DAMAGED" | "WRONG_ITEM" | "QUALITY";
+                            /** @enum {string} */
+                            settlement: "REPLACE" | "CREDIT";
+                            /** Format: date */
+                            returnedOn: string;
+                            /** Format: date-time */
+                            reversedAt: string | null;
+                            /** Format: uuid */
+                            recordedById: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            lines: {
+                                /** Format: uuid */
+                                returnId: string;
+                                /** Format: uuid */
+                                productId: string;
+                                pieces: number;
+                            }[];
+                        }[];
+                        customerCode: string;
+                        customerName: string;
+                        orderNumber: string;
+                        customerPo: string | null;
+                    };
+                };
+            };
+        };
+    };
     DispatchController_pendingGatePasses: {
         parameters: {
             query?: never;
@@ -6485,6 +6893,9 @@ export interface operations {
                             productId: string;
                             pieces: number;
                             returnedPieces: number;
+                            code: string;
+                            name: string;
+                            piecesPerCarton: number;
                         }[];
                         returns: {
                             /** Format: uuid */
@@ -6516,6 +6927,10 @@ export interface operations {
                                 pieces: number;
                             }[];
                         }[];
+                        customerCode: string;
+                        customerName: string;
+                        orderNumber: string;
+                        customerPo: string | null;
                     }[];
                 };
             };
@@ -6827,6 +7242,67 @@ export interface operations {
                             productId: string;
                             pieces: number;
                         }[];
+                    };
+                };
+            };
+        };
+    };
+    SettingsController_company: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        name: string;
+                        address: string;
+                        phone: string;
+                        bin: string | null;
+                    };
+                };
+            };
+        };
+    };
+    SettingsController_saveCompany: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    address: string;
+                    phone: string;
+                    /**
+                     * @description Business Identification Number, printed on challans when set
+                     * @default null
+                     */
+                    bin?: string | null;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        name: string;
+                        address: string;
+                        phone: string;
+                        bin: string | null;
                     };
                 };
             };

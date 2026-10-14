@@ -5,6 +5,11 @@ import { ALL_ROLES } from '../src/auth/decorators.js';
 import { factoryToday } from '../src/common/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { Role } from '../src/generated/prisma/client.js';
+import {
+  grindingReportResponse,
+  scrapSalesReportResponse,
+} from '../src/scrap/responses.js';
+import { postedDocumentResponse } from '../src/stock/responses.js';
 import { type Api, apiFor, startApp, tokenFor } from './support.js';
 
 const { OWNER, MANAGER, SUPERVISOR, STOREKEEPER } = Role;
@@ -146,6 +151,7 @@ describe('scrap', () => {
         reason: 'DAMAGED',
       });
       expect(document.number).toMatch(/^SCT-\d{6}$/);
+      postedDocumentResponse.strict().parse(document);
       expect((await balance(cap, finishedGoods)).pieces).toBe(700);
       expect(await balance(cap, scrapYard)).toMatchObject({
         pieces: 300,
@@ -305,6 +311,7 @@ describe('scrap', () => {
         lossBasisPoints: 305,
       });
       expect(report.batches).toHaveLength(3);
+      grindingReportResponse.strict().parse(report);
       const empty = (
         await owner
           .get('/scrap/grinding?from=2026-01-01&to=2026-01-31')
@@ -429,6 +436,7 @@ describe('scrap', () => {
         amountPoisha: 10_670,
       });
       expect(report.sales).toHaveLength(2);
+      scrapSalesReportResponse.strict().parse(report);
     });
   });
 

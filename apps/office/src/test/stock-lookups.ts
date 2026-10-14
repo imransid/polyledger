@@ -15,6 +15,12 @@ export const fgStore = location({
   name: 'Finished goods store',
   kind: 'FINISHED_GOODS_STORE',
 });
+export const scrapYard = location({
+  id: '00000000-0000-4000-8000-000000000104',
+  code: 'SCRAP',
+  name: 'Scrap yard',
+  kind: 'SCRAP_YARD',
+});
 export const supplier = partner({
   id: '00000000-0000-4000-8000-000000000301',
   code: 'SUP-BENGAL',

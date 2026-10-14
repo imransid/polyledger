@@ -50,7 +50,7 @@ export function apiLine(item: ItemRef, quantity: string) {
 
 export const emptyLine = { item: '', quantity: '' };
 
-const stockLine = z
+export const stockLine = z
   .object({ item: z.string(), quantity: z.string() })
   .superRefine((line, ctx) => {
     const item = parseItemValue(line.item);

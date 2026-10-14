@@ -6,4 +6,5 @@ export const ROLES: Role[] = [
   'SUPERVISOR',
   'STOREKEEPER',
   'OPERATOR',
+  'GUARD',
 ];

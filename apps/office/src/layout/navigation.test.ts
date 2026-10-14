@@ -13,4 +13,13 @@ describe('menuFor', () => {
   it('shows operators only production', () => {
     expect(paths('OPERATOR')).toEqual(['/production']);
   });
+
+  it('shows guards only the gate', () => {
+    expect(paths('GUARD')).toEqual(['/gate']);
+  });
+
+  it('shows settings to the owner only', () => {
+    expect(paths('OWNER')).toContain('/settings');
+    expect(paths('MANAGER')).not.toContain('/settings');
+  });
 });

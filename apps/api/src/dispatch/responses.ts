@@ -53,3 +53,20 @@ export const challanResponse = z.object({
   ),
   returns: z.array(customerReturnResponse),
 });
+
+const challanLine = challanResponse.shape.lines.element;
+
+/** The challan with the names its printout and the gate show. */
+export const challanDetailsResponse = challanResponse.safeExtend({
+  customerCode: z.string(),
+  customerName: z.string(),
+  orderNumber: z.string(),
+  customerPo: z.string().nullable(),
+  lines: z.array(
+    challanLine.safeExtend({
+      code: z.string(),
+      name: z.string(),
+      piecesPerCarton: whole,
+    }),
+  ),
+});

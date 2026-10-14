@@ -10,7 +10,7 @@ import {
 } from './queries/get-waste-report.js';
 import { PRODUCTION_READERS } from './roles.js';
 import { ApiOkResponse } from '@nestjs/swagger';
-import { machineBoardResponse } from './responses.js';
+import { machineBoardResponse, wasteReportResponse } from './responses.js';
 
 const wasteReportQuery = dateRangeQuery.safeExtend({
   groupBy: z.enum(WASTE_REPORT_GROUPS),
@@ -30,6 +30,7 @@ export class ProductionReportsController {
 
   /** Waste by shift date. */
   @Get('waste-report')
+  @ApiOkResponse({ standardSchema: wasteReportResponse })
   wasteReport(
     @Query({ schema: wasteReportQuery })
     query: z.infer<typeof wasteReportQuery>,

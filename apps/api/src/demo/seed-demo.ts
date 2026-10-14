@@ -13,11 +13,13 @@ import { ConfirmSalesOrderCommand } from '../orders/commands/confirm-sales-order
 import { CreateSalesOrderCommand } from '../orders/commands/create-sales-order.js';
 import { StartProductionCommand } from '../orders/commands/start-production.js';
 import { CreateProductCommand } from '../products/commands/create-product.js';
+import { SaveCompanyCommand } from '../settings/commands/save-company.js';
 import { CreateLocationCommand } from '../stock/commands/create-location.js';
 import { PostOpeningCommand } from '../stock/commands/post-opening.js';
 import { PostReceiptCommand } from '../stock/commands/post-receipt.js';
 import { CreateSupplierCommand } from '../suppliers/commands/create-supplier.js';
 import {
+  COMPANY,
   CUSTOMERS,
   LOCATIONS,
   MACHINES,
@@ -60,6 +62,7 @@ export async function seedDemo(
 
   const bus = app.get(CommandBus);
   const actorId = owner.id;
+  await bus.execute(new SaveCompanyCommand(actorId, COMPANY, undefined));
   for (const user of USERS) {
     await bus.execute(
       new CreateUserCommand(actorId, { ...user, password }, undefined),

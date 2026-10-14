@@ -4,13 +4,15 @@ import { api } from '@/api/client';
 import { unwrap } from '@/api/errors';
 import { useAllCustomers, useAllProducts } from '@/api/lookups';
 import type { Challan, JobCard, SalesOrder } from '@/api/types';
-import { SALES_EDITORS } from '@/auth/permissions';
+import { DISPATCHERS, SALES_EDITORS } from '@/auth/permissions';
 import { useUser } from '@/auth/use-session';
 import { DataTable } from '@/components/data-table';
 import { ErrorMessage } from '@/components/message';
 import { ReasonButton } from '@/components/reason-button';
 import { RecordPending, RecordShell } from '@/components/record-shell';
 import { Button } from '@/components/ui/button';
+import { ChallanStatusBadge } from '@/dispatch/parts';
+import { totalPieces } from '@/dispatch/use-dispatch';
 import { text } from '@/i18n';
 import {
   formatDay,
@@ -95,7 +97,7 @@ function Order({
       <Delivery order={order} />
       {open && <MaterialCheck orderId={order.id} />}
       <JobCards orderId={order.id} />
-      <Challans orderId={order.id} />
+      <Challans order={order} />
     </RecordShell>
   );
 }
@@ -347,27 +349,43 @@ function JobCards({ orderId }: { orderId: string }) {
   );
 }
 
-function Challans({ orderId }: { orderId: string }) {
+function Challans({ order }: { order: SalesOrder }) {
+  const canDispatch = DISPATCHERS.includes(useUser().role);
+  const deliverable =
+    order.status === 'CONFIRMED' || order.status === 'IN_PRODUCTION';
   const challans = useQuery({
-    queryKey: ['dispatch', 'challans', orderId],
+    queryKey: ['dispatch', 'challans', order.id],
     queryFn: () =>
-      unwrap(api.GET('/dispatch/challans', { params: { query: { orderId } } })),
+      unwrap(
+        api.GET('/dispatch/challans', {
+          params: { query: { orderId: order.id, pageSize: 200 } },
+        }),
+      ),
   });
   return (
     <section className="grid gap-2">
-      <h2 className="font-semibold">{words.challans}</h2>
-      {challans.data?.length === 0 ? (
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="font-semibold">{words.challans}</h2>
+        {canDispatch && deliverable && (
+          <Button variant="outline" size="sm" asChild>
+            <Link to={`/dispatch/new?order=${order.id}`}>
+              {text.dispatch.new}
+            </Link>
+          </Button>
+        )}
+      </div>
+      {challans.data?.total === 0 ? (
         <p className="text-sm text-muted-foreground">{words.nothingYet}</p>
       ) : (
         <DataTable<Challan>
-          rows={challans.data ?? []}
+          rows={challans.data?.items ?? []}
           rowKey={(challan) => challan.id}
           columns={[
             {
-              header: text.stock.documents.number,
+              header: text.dispatch.number,
               cell: (challan) => (
                 <Link
-                  to={`/stock/documents/${challan.stockDocumentId}`}
+                  to={`/dispatch/${challan.id}`}
                   className="font-medium underline-offset-4 hover:underline"
                 >
                   {challan.number}
@@ -375,21 +393,17 @@ function Challans({ orderId }: { orderId: string }) {
               ),
             },
             {
-              header: text.stock.card.date,
+              header: text.dispatch.date,
               cell: (challan) => formatDay(challan.dispatchedOn),
             },
             {
               header: words.pieces,
               numeric: true,
-              cell: (challan) =>
-                formatPieces(
-                  challan.lines.reduce((sum, line) => sum + line.pieces, 0),
-                ),
+              cell: (challan) => formatPieces(totalPieces(challan.lines)),
             },
             {
-              header: text.masterData.status,
-              cell: (challan) =>
-                challan.reversedAt ? text.stock.documents.reversed : '',
+              header: text.dispatch.gatePass,
+              cell: (challan) => <ChallanStatusBadge challan={challan} />,
             },
           ]}
         />

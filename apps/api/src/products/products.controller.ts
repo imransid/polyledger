@@ -14,9 +14,9 @@ import { z } from 'zod';
 import { productResponse } from './responses.js';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import {
-  ALL_ROLES,
   type AuthUser,
   CurrentUser,
+  FACTORY_ROLES,
   IdempotencyKey,
   Roles,
 } from '../auth/decorators.js';
@@ -50,7 +50,7 @@ const productChanges = productBody.omit({ code: true }).partial().strict();
 const productList = listQuery.extend({ active: activeFilter });
 
 // Operators read products too: job cards on the tablet show them.
-@Roles(...ALL_ROLES)
+@Roles(...FACTORY_ROLES)
 @Controller('products')
 export class ProductsController {
   constructor(

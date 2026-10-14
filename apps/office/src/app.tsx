@@ -10,7 +10,6 @@ import { AppLayout } from '@/layout/app-layout';
 import { NAVIGATION } from '@/layout/navigation';
 import { HomePage } from '@/pages/home-page';
 import { NotFoundPage } from '@/pages/not-found-page';
-import { PlaceholderPage } from '@/pages/placeholder-page';
 import { text } from './i18n';
 
 // Each area loads when first opened, so the login page stays small.
@@ -30,16 +29,34 @@ const ProductionArea = lazy(() =>
     default: area.ProductionArea,
   })),
 );
+const DispatchArea = lazy(() =>
+  import('@/dispatch/area').then((area) => ({ default: area.DispatchArea })),
+);
+const GatePassPage = lazy(() =>
+  import('@/dispatch/gate-pass').then((gate) => ({
+    default: gate.GatePassPage,
+  })),
+);
+const ScrapArea = lazy(() =>
+  import('@/scrap/area').then((area) => ({ default: area.ScrapArea })),
+);
 const UsersArea = lazy(() =>
   import('@/users/area').then((area) => ({ default: area.UsersArea })),
+);
+const SettingsArea = lazy(() =>
+  import('@/settings/area').then((area) => ({ default: area.SettingsArea })),
 );
 
 const AREAS: Record<string, ReactNode> = {
   '/stock': <StockArea />,
-  '/orders': <OrdersArea />,
   '/production': <ProductionArea />,
+  '/orders': <OrdersArea />,
+  '/dispatch': <DispatchArea />,
+  '/gate': <GatePassPage />,
+  '/scrap': <ScrapArea />,
   '/master-data': <MasterDataArea />,
   '/users': <UsersArea />,
+  '/settings': <SettingsArea />,
 };
 
 const queryClient = new QueryClient({
@@ -82,7 +99,7 @@ const router = createBrowserRouter([
                     <p className="text-muted-foreground">{text.loading}</p>
                   }
                 >
-                  {AREAS[item.path] ?? <PlaceholderPage title={item.label} />}
+                  {AREAS[item.path]}
                 </Suspense>
               </RoleGate>
             ),

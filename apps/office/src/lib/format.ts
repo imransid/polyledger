@@ -70,6 +70,17 @@ export function formatPieces(pieces: number): string {
   return `${PIECES.format(pieces)} pcs`;
 }
 
+/** Whole cartons and the loose pieces left over: "12 ctn + 40 pcs". */
+export function formatCartons(pieces: number, piecesPerCarton: number): string {
+  const cartons = Math.floor(pieces / piecesPerCarton);
+  const loose = pieces % piecesPerCarton;
+  if (cartons === 0) {
+    return formatPieces(loose);
+  }
+  const full = `${PIECES.format(cartons)} ctn`;
+  return loose === 0 ? full : `${full} + ${formatPieces(loose)}`;
+}
+
 /** A stock quantity in the item's own unit: kg for materials, pieces for products. */
 export function formatQuantity(
   itemType: 'RAW_MATERIAL' | 'PRODUCT',

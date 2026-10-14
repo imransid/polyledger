@@ -13,6 +13,7 @@ import { GetMaterialCheckHandler } from './queries/get-material-check.js';
 import { GetMaterialShortagesHandler } from './queries/get-material-shortages.js';
 import { GetOrderDeliveryHandler } from './queries/get-order-delivery.js';
 import { GetSalesOrderHandler } from './queries/get-sales-order.js';
+import { GetSalesOrdersHandler } from './queries/get-sales-orders.js';
 import { ListSalesOrdersHandler } from './queries/list-sales-orders.js';
 import { SalesOrdersController } from './sales-orders.controller.js';
 
@@ -31,6 +32,7 @@ import { SalesOrdersController } from './sales-orders.controller.js';
     AdjustDeliveriesHandler,
     ListSalesOrdersHandler,
     GetSalesOrderHandler,
+    GetSalesOrdersHandler,
     GetMaterialCheckHandler,
     GetMaterialShortagesHandler,
     GetOrderDeliveryHandler,

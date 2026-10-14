@@ -15,6 +15,8 @@ export interface AuthUser {
 export const IS_PUBLIC = 'isPublic';
 export const ROLES = 'roles';
 export const ALL_ROLES = Object.values(Role);
+/** Everyone but the gate guard, who only passes challans. */
+export const FACTORY_ROLES = ALL_ROLES.filter((role) => role !== Role.GUARD);
 
 export const Public = () => SetMetadata(IS_PUBLIC, true);
 

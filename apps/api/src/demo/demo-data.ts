@@ -16,7 +16,15 @@ export const USERS: { name: string; email: string; role: Role }[] = [
   },
   { name: 'Kamal Hossain', email: 'supervisor@demo.test', role: 'SUPERVISOR' },
   { name: 'Shahin Alam', email: 'operator@demo.test', role: 'OPERATOR' },
+  { name: 'Abdul Karim', email: 'guard@demo.test', role: 'GUARD' },
 ];
+
+export const COMPANY = {
+  name: 'Meghna Plastic Industries Ltd',
+  address: 'Plot 22, Savar Industrial Area, Savar, Dhaka',
+  phone: '+880 2 7745 0110',
+  bin: '0012345678901',
+};
 
 // The stock migration already creates these four; the seed reuses them.
 export const LOCATIONS: { code: string; name: string; kind: LocationKind }[] = [

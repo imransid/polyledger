@@ -13,9 +13,9 @@ import { z } from 'zod';
 import { mouldResponse } from './responses.js';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import {
-  ALL_ROLES,
   type AuthUser,
   CurrentUser,
+  FACTORY_ROLES,
   IdempotencyKey,
   Roles,
 } from '../auth/decorators.js';
@@ -57,7 +57,7 @@ const mouldList = listQuery.extend({
 });
 
 // Operators read moulds too: they load them on the machines.
-@Roles(...ALL_ROLES)
+@Roles(...FACTORY_ROLES)
 @Controller('moulds')
 export class MouldsController {
   constructor(

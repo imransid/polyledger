@@ -8,6 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { z } from 'zod';
 import {
   type AuthUser,
@@ -18,6 +19,7 @@ import {
 import { dateRangeQuery } from '../common/list-query.js';
 import { countSchema } from '../common/master-data.js';
 import { INT_MAX, kilogramsSchema } from '../common/quantities.js';
+import { postedDocumentResponse } from '../stock/responses.js';
 import { GrindScrapCommand } from './commands/grind-scrap.js';
 import { ReverseGrindingCommand } from './commands/reverse-grinding.js';
 import { ReverseScrapSaleCommand } from './commands/reverse-scrap-sale.js';
@@ -29,6 +31,12 @@ import { SellScrapCommand } from './commands/sell-scrap.js';
 import { ListGrindingBatchesQuery } from './queries/list-grinding-batches.js';
 import { ListScrapSalesQuery } from './queries/list-scrap-sales.js';
 import { GRINDING_REVERSERS, SCRAP_MANAGERS, SCRAP_STAFF } from './roles.js';
+import {
+  grindingBatchResponse,
+  grindingReportResponse,
+  scrapSaleResponse,
+  scrapSalesReportResponse,
+} from './responses.js';
 
 const positiveKilograms = kilogramsSchema.refine(
   (grams) => grams > 0,
@@ -144,6 +152,7 @@ export class ScrapController {
   /** Finished goods into a scrap yard. Reverse it like any stock document. */
   @Roles(...SCRAP_MANAGERS)
   @Post('transfers')
+  @ApiCreatedResponse({ standardSchema: postedDocumentResponse })
   scrapProducts(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -157,6 +166,7 @@ export class ScrapController {
 
   @Roles(...SCRAP_STAFF)
   @Get('grinding')
+  @ApiOkResponse({ standardSchema: grindingReportResponse })
   grindingBatches(
     @Query({ schema: dateRangeQuery }) query: z.infer<typeof dateRangeQuery>,
   ) {
@@ -171,6 +181,7 @@ export class ScrapController {
    */
   @Roles(...SCRAP_STAFF)
   @Post('grinding')
+  @ApiCreatedResponse({ standardSchema: grindingBatchResponse })
   grind(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -183,6 +194,7 @@ export class ScrapController {
 
   @Roles(...GRINDING_REVERSERS)
   @Post('grinding/:id/reverse')
+  @ApiCreatedResponse({ standardSchema: grindingBatchResponse })
   reverseGrinding(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -196,6 +208,7 @@ export class ScrapController {
 
   @Roles(...SCRAP_MANAGERS)
   @Get('sales')
+  @ApiOkResponse({ standardSchema: scrapSalesReportResponse })
   sales(
     @Query({ schema: dateRangeQuery }) query: z.infer<typeof dateRangeQuery>,
   ) {
@@ -204,6 +217,7 @@ export class ScrapController {
 
   @Roles(...SCRAP_MANAGERS)
   @Post('sales')
+  @ApiCreatedResponse({ standardSchema: scrapSaleResponse })
   sell(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -216,6 +230,7 @@ export class ScrapController {
 
   @Roles(...SCRAP_MANAGERS)
   @Post('sales/:id/reverse')
+  @ApiCreatedResponse({ standardSchema: scrapSaleResponse })
   reverseSale(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,

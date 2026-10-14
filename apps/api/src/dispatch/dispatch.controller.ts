@@ -16,21 +16,34 @@ import {
   IdempotencyKey,
   Roles,
 } from '../auth/decorators.js';
+import { found, listQuery, pageOf } from '../common/list-query.js';
 import { countSchema } from '../common/master-data.js';
 import { phoneSchema } from '../common/phone.js';
-import { ReturnReason, ReturnSettlement } from '../generated/prisma/client.js';
+import {
+  GatePassStatus,
+  ReturnReason,
+  ReturnSettlement,
+} from '../generated/prisma/client.js';
 import { PassGateCommand } from './commands/pass-gate.js';
 import { PostChallanCommand } from './commands/post-challan.js';
 import { RecordCustomerReturnCommand } from './commands/record-customer-return.js';
 import { ReverseChallanCommand } from './commands/reverse-challan.js';
 import { ReverseCustomerReturnCommand } from './commands/reverse-customer-return.js';
+import { GetChallanQuery } from './queries/get-challan.js';
+import { ListChallansQuery } from './queries/list-challans.js';
+import { ListPendingGatePassesQuery } from './queries/list-pending-gate-passes.js';
 import {
-  type ChallanFilter,
-  ListChallansQuery,
-} from './queries/list-challans.js';
-import { DISPATCH_MANAGERS, DISPATCH_STAFF, DISPATCHERS } from './roles.js';
+  DISPATCH_MANAGERS,
+  DISPATCH_STAFF,
+  DISPATCHERS,
+  GATE_KEEPERS,
+} from './roles.js';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
-import { challanResponse, customerReturnResponse } from './responses.js';
+import {
+  challanDetailsResponse,
+  challanResponse,
+  customerReturnResponse,
+} from './responses.js';
 
 const productLines = z
   .array(z.object({ productId: z.uuid(), pieces: countSchema }))
@@ -70,27 +83,18 @@ const returnBody = z.object({
   lines: productLines,
 });
 
-// One flat object rather than a union, so the OpenAPI spec lists the params.
-const challanList = z
-  .object({
+const challanList = listQuery
+  .omit({ search: true })
+  .extend({
     orderId: z.uuid().optional(),
     customerId: z.uuid().optional(),
     from: z.iso.date().optional(),
     to: z.iso.date().optional(),
+    gatePass: z.enum(GatePassStatus).optional(),
   })
-  .transform(({ orderId, customerId, from, to }, ctx): ChallanFilter => {
-    if (orderId) {
-      return { orderId };
-    }
-    if (customerId && from && to && from <= to) {
-      return { customerId, from, to };
-    }
-    ctx.issues.push({
-      code: 'custom',
-      message: 'Give an orderId, or a customerId with from and to',
-      input: { orderId, customerId, from, to },
-    });
-    return z.NEVER;
+  .refine((list) => !list.from || !list.to || list.from <= list.to, {
+    message: 'from cannot be after to',
+    path: ['to'],
   });
 
 const reasonBody = z.object({ reason: z.string().trim().min(1).max(300) });
@@ -102,21 +106,30 @@ export class DispatchController {
     private readonly queryBus: QueryBus,
   ) {}
 
-  /** An order's challans, or a customer's by dispatch date. */
+  /** Newest first. A gate pass filter leaves out reversed challans. */
   @Roles(...DISPATCH_STAFF)
   @Get('challans')
-  @ApiOkResponse({ standardSchema: z.array(challanResponse) })
+  @ApiOkResponse({ standardSchema: pageOf(challanDetailsResponse) })
   challans(@Query({ schema: challanList }) query: z.infer<typeof challanList>) {
     return this.queryBus.execute(new ListChallansQuery(query));
   }
 
   @Roles(...DISPATCH_STAFF)
-  @Get('gate-passes/pending')
-  @ApiOkResponse({ standardSchema: z.array(challanResponse) })
-  pendingGatePasses() {
-    return this.queryBus.execute(
-      new ListChallansQuery({ gatePassPending: true }),
+  @Get('challans/:id')
+  @ApiOkResponse({ standardSchema: challanDetailsResponse })
+  async challan(@Param('id', ParseUUIDPipe) id: string) {
+    return found(
+      await this.queryBus.execute(new GetChallanQuery(id)),
+      'Delivery challan',
     );
+  }
+
+  /** Oldest first. */
+  @Roles(...GATE_KEEPERS)
+  @Get('gate-passes/pending')
+  @ApiOkResponse({ standardSchema: z.array(challanDetailsResponse) })
+  pendingGatePasses() {
+    return this.queryBus.execute(new ListPendingGatePassesQuery());
   }
 
   @Roles(...DISPATCHERS)
@@ -132,7 +145,7 @@ export class DispatchController {
     );
   }
 
-  @Roles(...DISPATCH_STAFF)
+  @Roles(...GATE_KEEPERS)
   @Post('challans/:id/gate-pass')
   @HttpCode(200)
   @ApiOkResponse({ standardSchema: challanResponse })

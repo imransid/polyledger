@@ -24,6 +24,7 @@ const { OWNER, MANAGER, SUPERVISOR, STOREKEEPER, OPERATOR } = Role;
 // Who may do what, written out here rather than imported from the code, so a
 // wrong role list in the code fails this test instead of agreeing with it.
 const ACCESS = {
+  readJobCards: [OWNER, MANAGER, SUPERVISOR, STOREKEEPER, OPERATOR],
   readSummary: [OWNER, MANAGER, SUPERVISOR, STOREKEEPER],
   planJobCards: [OWNER, MANAGER],
   startAndStop: [OWNER, MANAGER, SUPERVISOR],
@@ -909,6 +910,7 @@ describe('production', () => {
     const allowed = (roles: Role[], ok: number) =>
       roles.includes(role) ? ok : 403;
     const {
+      readJobCards,
       readSummary,
       planJobCards,
       startAndStop,
@@ -917,8 +919,10 @@ describe('production', () => {
       reverseEntries,
     } = ACCESS;
 
-    await api.get('/job-cards').expect(200);
-    await api.get(`/job-cards/${working.id}`).expect(200);
+    await api.get('/job-cards').expect(allowed(readJobCards, 200));
+    await api
+      .get(`/job-cards/${working.id}`)
+      .expect(allowed(readJobCards, 200));
     await api
       .get(`/job-cards/${working.id}/summary`)
       .expect(allowed(readSummary, 200));

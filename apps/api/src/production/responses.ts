@@ -133,3 +133,20 @@ export const machineBoardResponse = z.array(
     rejectBasisPointsToday: whole.nullable(),
   }),
 );
+
+export const wasteReportResponse = z.array(
+  z.object({
+    /** The machine, mould or product id, or the shift. */
+    key: z.string(),
+    /** The machine, mould or product code, or the shift. */
+    label: z.string(),
+    runnerGrams: whole,
+    rejectGrams: whole,
+    purgeGrams: whole,
+    sweepingsGrams: whole,
+    wasteGrams: whole,
+    materialUsedGrams: whole,
+    /** Weighed waste out of material used: 2.35% is 235. */
+    wasteBasisPoints: whole.nullable(),
+  }),
+);

@@ -49,6 +49,8 @@ export const orderDeliveryResponse = z.object({
       deliveredPieces: whole,
       returnedPieces: whole,
       remainingPieces: whole,
+      /** The most the next challan may carry, the tolerance included. */
+      allowedPieces: whole,
     }),
   ),
 });

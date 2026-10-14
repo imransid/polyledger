@@ -11,9 +11,9 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { z } from 'zod';
 import {
-  ALL_ROLES,
   type AuthUser,
   CurrentUser,
+  FACTORY_ROLES,
   IdempotencyKey,
   Roles,
 } from '../auth/decorators.js';
@@ -170,7 +170,7 @@ const jobCardList = listQuery.extend({
 
 // Operators may read job cards so the tablet can pick one; everything else
 // is limited per action below.
-@Roles(...ALL_ROLES)
+@Roles(...FACTORY_ROLES)
 @Controller('job-cards')
 export class JobCardsController {
   constructor(

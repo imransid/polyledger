@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatCartons,
   formatChange,
   formatDuration,
   formatDay,
@@ -43,6 +44,13 @@ describe('format', () => {
     expect(formatPieces(120_000)).toBe('1,20,000 pcs');
     expect(formatChange('RAW_MATERIAL', 12_500)).toBe('+12.500 kg');
     expect(formatChange('PRODUCT', -300)).toBe('−300 pcs');
+  });
+
+  it('counts whole cartons and the loose pieces left over', () => {
+    expect(formatCartons(24_040, 2_000)).toBe('12 ctn + 40 pcs');
+    expect(formatCartons(24_000, 2_000)).toBe('12 ctn');
+    expect(formatCartons(1_999, 2_000)).toBe('1,999 pcs');
+    expect(formatCartons(200_000, 100)).toBe('2,000 ctn');
   });
 
   it('shows a run time in hours and minutes, rounding up', () => {

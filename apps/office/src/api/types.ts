@@ -8,6 +8,11 @@ type Ok<Path extends keyof paths> = paths[Path] extends {
 }
   ? Json<Response>
   : never;
+type Sent<Path extends keyof paths> = paths[Path] extends {
+  post: { requestBody: { content: { 'application/json': infer Body } } };
+}
+  ? Body
+  : never;
 
 export type CurrentUser = Ok<'/auth/me'>;
 export type Role = CurrentUser['role'];
@@ -46,7 +51,22 @@ export type Shift = ProductionEntry['shift'];
 export type WasteEntry = Ok<'/job-cards/{id}/waste'>[number];
 export type WasteType = WasteEntry['lines'][number]['wasteType'];
 export type MachineOnBoard = Ok<'/production/machine-board'>[number];
-export type Challan = Ok<'/dispatch/challans'>[number];
+export type Challan = Ok<'/dispatch/challans/{id}'>;
+export type ChallanLine = Challan['lines'][number];
+export type CustomerReturn = Challan['returns'][number];
+export type ReturnReason = CustomerReturn['reason'];
+export type ReturnSettlement = CustomerReturn['settlement'];
+export type GatePassStatus = Challan['gatePassStatus'];
+export type Company = Ok<'/settings/company'>;
+export type GrindingReport = Ok<'/scrap/grinding'>;
+export type GrindingBatch = GrindingReport['batches'][number];
+export type ScrapSalesReport = Ok<'/scrap/sales'>;
+export type ScrapSale = ScrapSalesReport['sales'][number];
+export type WasteReportRow = Ok<'/production/waste-report'>[number];
+export type WasteReportGroup = NonNullable<
+  paths['/production/waste-report']['get']['parameters']['query']
+>['groupBy'];
+export type ScrapReason = Sent<'/scrap/transfers'>['reason'];
 export type Operator = Ok<'/users/operators'>[number];
 
 export interface Page<T> {

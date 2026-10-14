@@ -85,5 +85,6 @@ export function apiFor(app: INestApplication, token: string) {
     post: (path: string) => server().post(path).auth(token, { type: 'bearer' }),
     patch: (path: string) =>
       server().patch(path).auth(token, { type: 'bearer' }),
+    put: (path: string) => server().put(path).auth(token, { type: 'bearer' }),
   };
 }

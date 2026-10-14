@@ -18,6 +18,8 @@ interface ConfirmButtonProps {
   question: string;
   onConfirm: () => Promise<unknown>;
   variant?: 'default' | 'outline' | 'destructive';
+  /** For a bigger button than the usual small one. */
+  className?: string;
   children?: ReactNode;
 }
 
@@ -27,6 +29,7 @@ export function ConfirmButton({
   question,
   onConfirm,
   variant = 'outline',
+  className,
   children,
 }: ConfirmButtonProps) {
   const [open, setOpen] = useState(false);
@@ -51,7 +54,7 @@ export function ConfirmButton({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant={variant} size="sm">
+        <Button variant={variant} size="sm" className={className}>
           {label}
         </Button>
       </AlertDialogTrigger>

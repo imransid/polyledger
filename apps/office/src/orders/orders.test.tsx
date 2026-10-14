@@ -1,9 +1,9 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
-import type { SalesOrder } from '@/api/types';
+import type { Role, SalesOrder, SalesOrderStatus } from '@/api/types';
 import { text } from '@/i18n';
-import { page, partner, product, salesOrder } from '@/test/fixtures';
+import { challan, page, partner, product, salesOrder } from '@/test/fixtures';
 import { productionLookups } from '@/test/production-lookups';
 import { renderArea } from '@/test/render';
 import { server } from '@/test/server';
@@ -35,6 +35,7 @@ function orderPage(current: () => SalesOrder, materialCheck?: () => Response) {
             deliveredPieces: 150_000,
             returnedPieces: 2_000,
             remainingPieces: 50_000,
+            allowedPieces: 50_000,
           },
         ],
       }),
@@ -59,7 +60,9 @@ function orderPage(current: () => SalesOrder, materialCheck?: () => Response) {
           }),
     ),
     http.get('*/api/job-cards', () => HttpResponse.json(page([]))),
-    http.get('*/api/dispatch/challans', () => HttpResponse.json([])),
+    http.get('*/api/dispatch/challans', () =>
+      HttpResponse.json(page([challan()])),
+    ),
   ];
 }
 
@@ -295,6 +298,46 @@ describe('order page', () => {
       expect(screen.queryByRole('button', { name: label })).toBeNull();
       expect(screen.queryByRole('link', { name: label })).toBeNull();
     }
+  });
+});
+
+describe('order challans', () => {
+  it('links each challan, and lets a storekeeper start the next one', async () => {
+    server.use(
+      ...productionLookups(),
+      ...orderPage(() => salesOrder({ status: 'IN_PRODUCTION' })),
+    );
+    renderArea(<OrdersArea />, {
+      mount,
+      at: `/orders/${salesOrder().id}`,
+      role: 'STOREKEEPER',
+    });
+
+    const link = await screen.findByRole('link', { name: 'DC-000012' });
+    expect(link.getAttribute('href')).toBe(`/dispatch/${challan().id}`);
+    expect(
+      screen
+        .getByRole('link', { name: text.dispatch.new })
+        .getAttribute('href'),
+    ).toBe(`/dispatch/new?order=${salesOrder().id}`);
+  });
+
+  it.each<[Role, SalesOrderStatus]>([
+    ['STOREKEEPER', 'DRAFT'],
+    ['SUPERVISOR', 'IN_PRODUCTION'],
+  ])('offers a %s no new challan on a %s order', async (role, status) => {
+    server.use(
+      ...productionLookups(),
+      ...orderPage(() => salesOrder({ status })),
+    );
+    renderArea(<OrdersArea />, {
+      mount,
+      at: `/orders/${salesOrder().id}`,
+      role,
+    });
+
+    await screen.findByRole('link', { name: 'DC-000012' });
+    expect(screen.queryByRole('link', { name: text.dispatch.new })).toBeNull();
   });
 });
 

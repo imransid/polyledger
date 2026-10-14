@@ -3,6 +3,7 @@ import { CreateCustomerHandler } from './commands/create-customer.js';
 import { UpdateCustomerHandler } from './commands/update-customer.js';
 import { CustomersController } from './customers.controller.js';
 import { GetCustomerHandler } from './queries/get-customer.js';
+import { GetCustomersHandler } from './queries/get-customers.js';
 import { ListCustomersHandler } from './queries/list-customers.js';
 
 @Module({
@@ -12,6 +13,7 @@ import { ListCustomersHandler } from './queries/list-customers.js';
     UpdateCustomerHandler,
     ListCustomersHandler,
     GetCustomerHandler,
+    GetCustomersHandler,
   ],
 })
 export class CustomersModule {}

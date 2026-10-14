@@ -16,6 +16,8 @@ enum Role {
   STOREKEEPER
   SUPERVISOR
   OPERATOR
+  /// Passes challans at the gate and sees nothing else.
+  GUARD
 }
 
 model User {
@@ -41,6 +43,7 @@ model User {
   recordedChallans   DeliveryChallan[]  @relation("ChallanRecorder")
   gatePassedChallans DeliveryChallan[]  @relation("ChallanGatePasser")
   customerReturns    CustomerReturn[]
+  companySettings    CompanySettings[]
 
   @@map("users")
 }
@@ -689,4 +692,19 @@ model CustomerReturnLine {
 
   @@id([returnId, productId])
   @@map("customer_return_lines")
+}
+
+/// A single row (id 1): the company details printed on delivery challans.
+model CompanySettings {
+  id          Int      @id @default(1)
+  name        String
+  address     String
+  phone       String
+  /// Business Identification Number, 13 digits; printed only when set.
+  bin         String?
+  updatedById String   @map("updated_by_id") @db.Uuid
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy   User     @relation(fields: [updatedById], references: [id])
+
+  @@map("company_settings")
 }

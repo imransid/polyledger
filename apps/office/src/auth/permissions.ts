@@ -39,3 +39,21 @@ export const PRODUCTION_READERS: Role[] = [
   'SUPERVISOR',
   'STOREKEEPER',
 ];
+
+// The API's dispatch and scrap role lists.
+/** Post delivery challans. */
+export const DISPATCHERS: Role[] = ['OWNER', 'MANAGER', 'STOREKEEPER'];
+/** Reverse challans; record and reverse customer returns. */
+export const DISPATCH_MANAGERS: Role[] = ['OWNER', 'MANAGER'];
+/** See the challans waiting at the gate and pass them. */
+export const GATE_KEEPERS: Role[] = [
+  'OWNER',
+  'MANAGER',
+  'SUPERVISOR',
+  'STOREKEEPER',
+  'GUARD',
+];
+/** Reverse grinding batches. */
+export const GRINDING_REVERSERS: Role[] = ['OWNER', 'MANAGER', 'SUPERVISOR'];
+/** Scrap products and sell scrap: everything with money in it. */
+export const SCRAP_MANAGERS: Role[] = ['OWNER', 'MANAGER'];

@@ -18,6 +18,9 @@ import { locationResponse } from '../src/stock/responses.js';
 import { supplierResponse } from '../src/suppliers/responses.js';
 import { type Api, apiFor, startApp, tokenFor } from './support.js';
 
+// Operators read products and moulds on the tablet; the gate guard doesn't.
+const FLOOR_READERS = [...MASTER_DATA_READERS, Role.OPERATOR];
+
 let productCount = 0;
 
 async function createProduct(api: Api) {
@@ -60,7 +63,7 @@ const resources: Resource[] = [
   },
   {
     path: '/products',
-    readers: ALL_ROLES,
+    readers: FLOOR_READERS,
     fields: async () => ({
       name: 'Bottle cap 28 mm',
       pieceWeightMg: 2_500,
@@ -73,7 +76,7 @@ const resources: Resource[] = [
   },
   {
     path: '/moulds',
-    readers: ALL_ROLES,
+    readers: FLOOR_READERS,
     fields: async (owner) => ({
       name: '4-cavity cap mould',
       cavities: 4,

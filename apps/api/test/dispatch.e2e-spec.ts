@@ -6,19 +6,21 @@ import { z } from 'zod';
 import { ALL_ROLES } from '../src/auth/decorators.js';
 import { factoryToday } from '../src/common/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
+import { pageOf } from '../src/common/list-query.js';
 import {
+  challanDetailsResponse,
   challanResponse,
   customerReturnResponse,
 } from '../src/dispatch/responses.js';
 import { Role } from '../src/generated/prisma/client.js';
 import { type Api, apiFor, startApp, tokenFor } from './support.js';
 
-const { OWNER, MANAGER, SUPERVISOR, STOREKEEPER } = Role;
+const { OWNER, MANAGER, SUPERVISOR, STOREKEEPER, GUARD } = Role;
 
 // Written out rather than imported, so a wrong role list in the code fails.
 const ACCESS = {
   postChallans: [OWNER, MANAGER, STOREKEEPER],
-  passGate: [OWNER, MANAGER, SUPERVISOR, STOREKEEPER],
+  gate: [OWNER, MANAGER, SUPERVISOR, STOREKEEPER, GUARD],
   read: [OWNER, MANAGER, SUPERVISOR, STOREKEEPER],
   reverseAndReturn: [OWNER, MANAGER],
 };
@@ -244,6 +246,7 @@ describe('dispatch', () => {
           deliveredPieces: 1_000,
           returnedPieces: 0,
           remainingPieces: 0,
+          allowedPieces: 0,
         },
         {
           lineNo: 2,
@@ -253,16 +256,16 @@ describe('dispatch', () => {
           deliveredPieces: 40,
           returnedPieces: 0,
           remainingPieces: 60,
+          allowedPieces: 60,
         },
       ]);
       expect(await status(order.id)).toBe('IN_PRODUCTION');
       const listed = (
         await owner.get(`/dispatch/challans?orderId=${order.id}`).expect(200)
       ).body;
-      expect(listed.map((challan: { id: string }) => challan.id)).toEqual([
-        first.id,
-        second.body.id,
-      ]);
+      expect(listed.items.map((challan: { id: string }) => challan.id)).toEqual(
+        [second.body.id, first.id],
+      );
     });
 
     it('refuses more than the order still needs, or what the order or store cannot give', async () => {
@@ -322,16 +325,22 @@ describe('dispatch', () => {
       const order = await confirmedOrder([[cap, 1_000]], {
         overDeliveryBasisPoints: 200,
       });
+      await challanFor(order.id, [[cap, 300]]);
+      expect(await deliveryOf(order.id, cap)).toMatchObject({
+        remainingPieces: 700,
+        allowedPieces: 720,
+      });
 
-      expect(await message(postChallan(order.id, [[cap, 1_021]]), 409)).toBe(
-        `${order.number} can take only 1020 more CAP-28`,
+      expect(await message(postChallan(order.id, [[cap, 721]]), 409)).toBe(
+        `${order.number} can take only 720 more CAP-28`,
       );
-      await challanFor(order.id, [[cap, 1_020]]);
+      await challanFor(order.id, [[cap, 720]]);
 
       expect(await status(order.id)).toBe('COMPLETED');
       expect(await deliveryOf(order.id, cap)).toMatchObject({
         deliveredPieces: 1_020,
         remainingPieces: 0,
+        allowedPieces: 0,
       });
       expect(await message(postChallan(order.id, [[cap, 1]]), 409)).toBe(
         `${order.number} is COMPLETED; only CONFIRMED or IN_PRODUCTION orders can be delivered`,
@@ -383,28 +392,73 @@ describe('dispatch', () => {
       expect(await prisma.deliveryChallan.count()).toBe(1);
     });
 
-    it("lists a customer's challans by dispatch date", async () => {
+    it('lists challans newest first, by order, customer, dispatch date and gate pass', async () => {
       const order = await confirmedOrder();
-      const challan = await challanFor(order.id, [[cap, 100]]);
+      const passed = await challanFor(order.id, [[cap, 100]]);
+      await passGate(passed.id).expect(200);
+      const reversed = await challanFor(order.id, [[cap, 10]]);
+      await reverseChallan(reversed.id).expect(201);
       const other = await confirmedOrder([[cap, 10]], {
         customerId: otherCustomer,
       });
-      await challanFor(other.id, [[cap, 10]]);
+      const waiting = await challanFor(other.id, [[cap, 10]]);
       const list = async (query: string) =>
-        (await owner.get(`/dispatch/challans?${query}`).expect(200)).body.map(
-          (c: { id: string }) => c.id,
-        );
+        (await owner.get(`/dispatch/challans?${query}`).expect(200)).body;
+      const ids = async (query: string) =>
+        (await list(query)).items.map((c: { id: string }) => c.id);
 
+      expect(await ids('')).toEqual([waiting.id, reversed.id, passed.id]);
+      expect(await ids(`orderId=${other.id}`)).toEqual([waiting.id]);
       expect(
-        await list(`customerId=${customer}&from=${today}&to=${today}`),
-      ).toEqual([challan.id]);
-      expect(
-        await list(`customerId=${customer}&from=2026-01-01&to=2026-01-31`),
-      ).toEqual([]);
-      await owner.get('/dispatch/challans').expect(400);
+        await ids(`customerId=${customer}&from=${today}&to=${today}`),
+      ).toEqual([reversed.id, passed.id]);
+      expect(await ids(`customerId=${customer}&to=2026-01-31`)).toEqual([]);
+      expect(await ids(`from=${today}`)).toHaveLength(3);
+      // A reversed challan never waits at the gate.
+      expect(await ids('gatePass=PENDING')).toEqual([waiting.id]);
+      expect(await ids('gatePass=PASSED')).toEqual([passed.id]);
+      expect(await list('pageSize=2&page=2')).toMatchObject({
+        total: 3,
+        page: 2,
+        pageSize: 2,
+        items: [{ id: passed.id }],
+      });
       await owner
-        .get(`/dispatch/challans?customerId=${customer}&from=${today}`)
+        .get('/dispatch/challans?from=2026-02-01&to=2026-01-31')
         .expect(400);
+      await owner.get('/dispatch/challans?gatePass=WAITING').expect(400);
+    });
+
+    it('reads one challan with the names its printout needs', async () => {
+      const order = await confirmedOrder(
+        [
+          [jar, 100],
+          [cap, 1_000],
+        ],
+        { customerPo: 'PO-7781' },
+      );
+      const challan = await challanFor(order.id, [
+        [jar, 40],
+        [cap, 250],
+      ]);
+
+      const read = (
+        await storekeeper.get(`/dispatch/challans/${challan.id}`).expect(200)
+      ).body;
+
+      expect(read).toMatchObject({
+        number: challan.number,
+        customerCode: 'CUST-01',
+        customerName: 'CUST-01',
+        orderNumber: order.number,
+        customerPo: 'PO-7781',
+        lines: [
+          { code: 'CAP-28', name: 'CAP-28', pieces: 250, piecesPerCarton: 100 },
+          { code: 'JAR-1L', name: 'JAR-1L', pieces: 40, piecesPerCarton: 100 },
+        ],
+      });
+      await owner.get(`/dispatch/challans/${randomUUID()}`).expect(404);
+      await owner.get('/dispatch/challans/not-a-uuid').expect(400);
     });
   });
 
@@ -439,11 +493,19 @@ describe('dispatch', () => {
     it('is passed once, by anyone but an operator, and then the challan cannot be reversed', async () => {
       const order = await confirmedOrder();
       const challan = await challanFor(order.id, [[cap, 400]]);
+      const guard = apiFor(app, await tokenFor(app, Role.GUARD));
+      const pending = async () =>
+        (await guard.get('/dispatch/gate-passes/pending').expect(200)).body;
       const pendingIds = async () =>
-        (
-          await supervisor.get('/dispatch/gate-passes/pending').expect(200)
-        ).body.map((c: { id: string }) => c.id);
-      expect(await pendingIds()).toEqual([challan.id]);
+        (await pending()).map((c: { id: string }) => c.id);
+      expect(await pending()).toMatchObject([
+        {
+          id: challan.id,
+          customerName: 'CUST-01',
+          vehicleNumber: 'DHAKA METRO-TA 11-2345',
+          lines: [{ code: 'CAP-28', pieces: 400, piecesPerCarton: 100 }],
+        },
+      ]);
 
       await passGate(challan.id, operator).expect(403);
       const passed = (await passGate(challan.id, storekeeper).expect(200)).body;
@@ -629,12 +691,28 @@ describe('dispatch', () => {
     const returned = (await recordReturn(challan.id, [[cap, 30]]).expect(201))
       .body;
 
+    // One still at the gate, so the pending list has something to parse.
+    await challanFor((await confirmedOrder()).id, [[cap, 10]]);
+    const details = challanDetailsResponse.strict();
+
     challanResponse.strict().parse(challan);
     customerReturnResponse.strict().parse(returned);
-    z.array(challanResponse.strict()).parse(
-      (await owner.get(`/dispatch/challans?orderId=${order.id}`).expect(200))
-        .body,
+    pageOf(details)
+      .strict()
+      .parse(
+        (await owner.get(`/dispatch/challans?orderId=${order.id}`).expect(200))
+          .body,
+      );
+    details.parse(
+      (await owner.get(`/dispatch/challans/${challan.id}`).expect(200)).body,
     );
+    expect(
+      z
+        .array(details)
+        .parse(
+          (await owner.get('/dispatch/gate-passes/pending').expect(200)).body,
+        ),
+    ).toHaveLength(1);
   });
 
   it('records the same challan and the same return once when sent twice', async () => {
@@ -728,7 +806,7 @@ describe('dispatch', () => {
     const api = loggedIn[role] ?? apiFor(app, await tokenFor(app, role));
     const allowed = (roles: Role[], ok: number) =>
       roles.includes(role) ? ok : 403;
-    const { postChallans, passGate: gate, read, reverseAndReturn } = ACCESS;
+    const { postChallans, gate, read, reverseAndReturn } = ACCESS;
 
     await postChallan(order.id, [[cap, 10]], {}, api).expect(
       allowed(postChallans, 201),
@@ -747,7 +825,8 @@ describe('dispatch', () => {
     await api
       .get(`/dispatch/challans?orderId=${order.id}`)
       .expect(allowed(read, 200));
-    await api.get('/dispatch/gate-passes/pending').expect(allowed(read, 200));
+    await api.get(`/dispatch/challans/${passed.id}`).expect(allowed(read, 200));
+    await api.get('/dispatch/gate-passes/pending').expect(allowed(gate, 200));
     await api
       .get(`/sales-orders/${order.id}/delivery`)
       .expect(allowed(read, 200));

@@ -19,11 +19,12 @@ export function AppLayout() {
   }
   return (
     <UserContext value={user.data}>
-      <div className="flex min-h-screen">
+      {/* The menu goes on top on a phone, such as the guard's at the gate. */}
+      <div className="flex min-h-screen flex-col md:flex-row">
         <Sidebar user={user.data} />
-        <div className="flex flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col">
           <TopBar user={user.data} />
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-4 md:p-6 print:p-0">
             <Outlet />
           </main>
         </div>
@@ -38,11 +39,11 @@ function Sidebar({ user }: { user: CurrentUser }) {
     ...menuFor(user.role),
   ];
   return (
-    <aside className="w-60 shrink-0 border-r bg-muted/40 p-4">
-      <Link to="/" className="mb-6 block px-3 text-lg font-semibold">
+    <aside className="shrink-0 border-b bg-muted/40 p-4 md:w-60 md:border-r md:border-b-0 print:hidden">
+      <Link to="/" className="mb-3 block px-3 text-lg font-semibold md:mb-6">
         {text.appName}
       </Link>
-      <nav className="grid gap-1">
+      <nav className="flex flex-wrap gap-1 md:grid">
         {items.map(({ path, label, icon: Icon }) => (
           <NavLink
             key={path}
@@ -68,7 +69,7 @@ function Sidebar({ user }: { user: CurrentUser }) {
 
 function TopBar({ user }: { user: CurrentUser }) {
   return (
-    <header className="flex items-center justify-end gap-2 border-b px-6 py-3">
+    <header className="flex flex-wrap items-center justify-end gap-2 border-b px-4 py-3 md:px-6 print:hidden">
       <span className="mr-2 text-sm">
         {user.name}
         <span className="text-muted-foreground">
