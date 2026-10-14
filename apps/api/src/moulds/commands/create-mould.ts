@@ -16,6 +16,7 @@ export interface NewMould {
   name: string;
   cavities: number;
   cycleTimeTenths: number;
+  runnerWeightMg: number;
   productId: string;
 }
 

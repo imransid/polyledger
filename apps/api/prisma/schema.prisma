@@ -32,6 +32,9 @@ model User {
   stockDocuments     StockDocument[]
   stockLedgerEntries StockLedgerEntry[]
   salesOrders        SalesOrder[]
+  jobCards           JobCard[]
+  operatedEntries    ProductionEntry[]  @relation("EntryOperator")
+  recordedEntries    ProductionEntry[]  @relation("EntryRecorder")
 
   @@map("users")
 }
@@ -99,6 +102,7 @@ model Product {
   moulds          Mould[]
   formulaVersions FormulaVersion[]
   salesOrderLines SalesOrderLine[]
+  jobCards        JobCard[]
 
   @@map("products")
 }
@@ -116,11 +120,14 @@ model Mould {
   cavities        Int
   /// Tenths of a second: 12.5 s is 125.
   cycleTimeTenths Int         @map("cycle_time_tenths")
+  /// Cold runner material per shot; 0 for a hot runner.
+  runnerWeightMg  Int         @default(0) @map("runner_weight_mg")
   productId       String      @map("product_id") @db.Uuid
   status          MouldStatus @default(ACTIVE)
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
   product         Product     @relation(fields: [productId], references: [id])
+  jobCards        JobCard[]
 
   @@index([productId])
   @@map("moulds")
@@ -140,6 +147,7 @@ model Machine {
   status    MachineStatus @default(ACTIVE)
   createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  jobCards  JobCard[]
 
   @@map("machines")
 }
@@ -184,6 +192,7 @@ model FormulaVersion {
   createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   product          Product       @relation(fields: [productId], references: [id])
   lines            FormulaLine[]
+  jobCards         JobCard[]
 
   @@unique([productId, version])
   @@unique([productId], map: "formula_versions_one_active_per_product", where: { isActive: true })
@@ -219,6 +228,7 @@ model Location {
   updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
   balances      StockBalance[]
   ledgerEntries StockLedgerEntry[]
+  jobCards      JobCard[]
 
   @@map("locations")
 }
@@ -229,6 +239,10 @@ enum StockDocumentKind {
   ADJUSTMENT
   OPENING
   REVERSAL
+  ISSUE
+  PRODUCTION
+  HANDOVER
+  RETURN
 }
 
 enum StockItemType {
@@ -247,9 +261,11 @@ model StockDocument {
   reason            String?
   reversesId        String?            @unique @map("reverses_id") @db.Uuid
   reversedAt        DateTime?          @map("reversed_at") @db.Timestamptz(3)
+  jobCardId         String?            @map("job_card_id") @db.Uuid
   postedById        String             @map("posted_by_id") @db.Uuid
   postedAt          DateTime           @default(now()) @map("posted_at") @db.Timestamptz(3)
   supplier          Supplier?          @relation(fields: [supplierId], references: [id])
+  jobCard           JobCard?           @relation(fields: [jobCardId], references: [id])
   postedBy          User               @relation(fields: [postedById], references: [id])
   reverses          StockDocument?     @relation("DocumentReversal", fields: [reversesId], references: [id])
   reversedBy        StockDocument?     @relation("DocumentReversal")
@@ -258,6 +274,7 @@ model StockDocument {
 
   @@unique([supplierId, supplierReference], map: "stock_documents_one_open_receipt_per_challan", where: { kind: "RECEIPT", reversedAt: null })
   @@index([kind, postedAt])
+  @@index([jobCardId])
   @@map("stock_documents")
 }
 
@@ -348,6 +365,7 @@ model SalesOrder {
   customer     Customer         @relation(fields: [customerId], references: [id])
   createdBy    User             @relation(fields: [createdById], references: [id])
   lines        SalesOrderLine[]
+  jobCards     JobCard[]
 
   @@index([status, deliveryDate])
   @@index([customerId])
@@ -367,4 +385,92 @@ model SalesOrderLine {
   @@id([orderId, lineNo])
   @@unique([orderId, productId])
   @@map("sales_order_lines")
+}
+
+enum JobCardStatus {
+  PLANNED
+  RELEASED
+  RUNNING
+  CLOSED
+  CANCELLED
+}
+
+model JobCard {
+  id               String            @id @default(uuid(7)) @db.Uuid
+  number           String            @unique
+  productId        String            @map("product_id") @db.Uuid
+  mouldId          String            @map("mould_id") @db.Uuid
+  machineId        String            @map("machine_id") @db.Uuid
+  floorLocationId  String            @map("floor_location_id") @db.Uuid
+  salesOrderId     String?           @map("sales_order_id") @db.Uuid
+  /// Frozen when the card is created, like the three weights below, so later
+  /// edits to the product, mould or formula never change a job in progress.
+  formulaVersionId String            @map("formula_version_id") @db.Uuid
+  pieceWeightMg    Int               @map("piece_weight_mg")
+  cavities         Int
+  runnerWeightMg   Int               @map("runner_weight_mg")
+  plannedPieces    Int               @map("planned_pieces")
+  plannedStartDate DateTime          @map("planned_start_date") @db.Date
+  status           JobCardStatus     @default(PLANNED)
+  cancelReason     String?           @map("cancel_reason")
+  createdById      String            @map("created_by_id") @db.Uuid
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  product          Product           @relation(fields: [productId], references: [id])
+  mould            Mould             @relation(fields: [mouldId], references: [id])
+  machine          Machine           @relation(fields: [machineId], references: [id])
+  floorLocation    Location          @relation(fields: [floorLocationId], references: [id])
+  salesOrder       SalesOrder?       @relation(fields: [salesOrderId], references: [id])
+  formulaVersion   FormulaVersion    @relation(fields: [formulaVersionId], references: [id])
+  createdBy        User              @relation(fields: [createdById], references: [id])
+  entries          ProductionEntry[]
+  stockDocuments   StockDocument[]
+
+  @@unique([machineId], map: "job_cards_one_running_per_machine", where: { status: "RUNNING" })
+  @@unique([mouldId], map: "job_cards_one_running_per_mould", where: { status: "RUNNING" })
+  @@index([status])
+  @@map("job_cards")
+}
+
+enum Shift {
+  A
+  B
+  C
+}
+
+model ProductionEntry {
+  id              String                    @id @default(uuid(7)) @db.Uuid
+  jobCardId       String                    @map("job_card_id") @db.Uuid
+  /// The date the shift started: night shift C keeps its start date.
+  shiftDate       DateTime                  @map("shift_date") @db.Date
+  shift           Shift
+  operatorId      String                    @map("operator_id") @db.Uuid
+  shotStart       Int                       @map("shot_start")
+  shotEnd         Int                       @map("shot_end")
+  goodPieces      Int                       @map("good_pieces")
+  rejectedPieces  Int                       @map("rejected_pieces")
+  stockDocumentId String                    @unique @map("stock_document_id") @db.Uuid
+  reversedAt      DateTime?                 @map("reversed_at") @db.Timestamptz(3)
+  recordedById    String                    @map("recorded_by_id") @db.Uuid
+  createdAt       DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  jobCard         JobCard                   @relation(fields: [jobCardId], references: [id])
+  operator        User                      @relation("EntryOperator", fields: [operatorId], references: [id])
+  recordedBy      User                      @relation("EntryRecorder", fields: [recordedById], references: [id])
+  materials       ProductionEntryMaterial[]
+
+  @@unique([jobCardId, shiftDate, shift], map: "production_entries_one_per_shift", where: { reversedAt: null })
+  @@index([jobCardId])
+  @@map("production_entries")
+}
+
+/// What one entry consumed, split so runner use can be reported on its own.
+model ProductionEntryMaterial {
+  entryId       String          @map("entry_id") @db.Uuid
+  rawMaterialId String          @map("raw_material_id") @db.Uuid
+  pieceGrams    Int             @map("piece_grams")
+  runnerGrams   Int             @map("runner_grams")
+  entry         ProductionEntry @relation(fields: [entryId], references: [id])
+
+  @@id([entryId, rawMaterialId])
+  @@map("production_entry_materials")
 }

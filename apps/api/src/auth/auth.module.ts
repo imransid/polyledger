@@ -20,6 +20,7 @@ import { SeedOwnerCommand, SeedOwnerHandler } from './commands/seed-owner.js';
 import { normalizeLogin } from './domain/login.js';
 import { TokenService } from './infra/tokens.js';
 import { GetCurrentUserHandler } from './queries/get-current-user.js';
+import { GetUserHandler } from './queries/get-user.js';
 import { ListUsersHandler } from './queries/list-users.js';
 import { UsersController } from './users.controller.js';
 
@@ -61,6 +62,7 @@ function byIpAndLogin(request: Record<string, any>): string {
     ResetUserPasswordHandler,
     SeedOwnerHandler,
     GetCurrentUserHandler,
+    GetUserHandler,
     ListUsersHandler,
   ],
 })

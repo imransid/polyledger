@@ -3,11 +3,14 @@ import { CreateLocationHandler } from './commands/create-location.js';
 import { PostAdjustmentHandler } from './commands/post-adjustment.js';
 import { PostOpeningHandler } from './commands/post-opening.js';
 import { PostReceiptHandler } from './commands/post-receipt.js';
+import { PostStockDocumentHandler } from './commands/post-stock-document.js';
 import { PostTransferHandler } from './commands/post-transfer.js';
 import { ReverseDocumentHandler } from './commands/reverse-document.js';
+import { ReverseStockDocumentHandler } from './commands/reverse-stock-document.js';
 import { UpdateLocationHandler } from './commands/update-location.js';
 import { LocationsController } from './locations.controller.js';
 import { GetLocationHandler } from './queries/get-location.js';
+import { GetJobCardStockHandler } from './queries/get-job-card-stock.js';
 import { GetStockCardHandler } from './queries/get-stock-card.js';
 import { GetStockDocumentHandler } from './queries/get-stock-document.js';
 import { GetStockTotalsHandler } from './queries/get-stock-totals.js';
@@ -35,6 +38,8 @@ import { StockReportsController } from './stock-reports.controller.js';
     PostAdjustmentHandler,
     PostOpeningHandler,
     ReverseDocumentHandler,
+    PostStockDocumentHandler,
+    ReverseStockDocumentHandler,
     ListStockDocumentsHandler,
     GetStockDocumentHandler,
     ListBalancesHandler,
@@ -42,6 +47,7 @@ import { StockReportsController } from './stock-reports.controller.js';
     ListLowStockHandler,
     ListReceiptShortagesHandler,
     GetStockTotalsHandler,
+    GetJobCardStockHandler,
   ],
 })
 export class StockModule {}

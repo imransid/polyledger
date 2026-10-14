@@ -24,6 +24,10 @@ const NUMBER_PREFIX: Record<StockDocumentKind, string> = {
   ADJUSTMENT: 'ADJ',
   OPENING: 'OPN',
   REVERSAL: 'REV',
+  ISSUE: 'ISS',
+  PRODUCTION: 'PRD',
+  HANDOVER: 'FGH',
+  RETURN: 'RET',
 };
 
 export interface Movement {

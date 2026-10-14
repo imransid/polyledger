@@ -24,23 +24,28 @@ import {
   MASTER_DATA_EDITORS,
   nameSchema,
 } from '../common/master-data.js';
+import { INT_MAX } from '../common/quantities.js';
 import { MouldStatus } from '../generated/prisma/client.js';
 import { CreateMouldCommand } from './commands/create-mould.js';
 import { UpdateMouldCommand } from './commands/update-mould.js';
 import { GetMouldQuery } from './queries/get-mould.js';
 import { ListMouldsQuery } from './queries/list-moulds.js';
 
+const runnerWeight = z.number().int().min(0).max(INT_MAX);
+
 const mouldBody = z.object({
   code: codeSchema,
   name: nameSchema,
   cavities: countSchema,
   cycleTimeTenths: countSchema,
+  runnerWeightMg: runnerWeight.default(0),
   productId: z.uuid(),
 });
 
+// No defaults here: under partial() zod would fill them in and overwrite.
 const mouldChanges = mouldBody
   .omit({ code: true })
-  .extend({ status: z.enum(MouldStatus) })
+  .extend({ runnerWeightMg: runnerWeight, status: z.enum(MouldStatus) })
   .partial()
   .strict();
 

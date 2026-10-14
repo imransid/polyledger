@@ -4,6 +4,7 @@ import { ChangeSalesOrderHandler } from './commands/change-sales-order.js';
 import { CompleteSalesOrderHandler } from './commands/complete-sales-order.js';
 import { ConfirmSalesOrderHandler } from './commands/confirm-sales-order.js';
 import { CreateSalesOrderHandler } from './commands/create-sales-order.js';
+import { MarkInProductionHandler } from './commands/mark-in-production.js';
 import { StartProductionHandler } from './commands/start-production.js';
 import { MaterialPlanner } from './infra/material-planner.js';
 import { GetMaterialCheckHandler } from './queries/get-material-check.js';
@@ -22,6 +23,7 @@ import { SalesOrdersController } from './sales-orders.controller.js';
     StartProductionHandler,
     CompleteSalesOrderHandler,
     CancelSalesOrderHandler,
+    MarkInProductionHandler,
     ListSalesOrdersHandler,
     GetSalesOrderHandler,
     GetMaterialCheckHandler,

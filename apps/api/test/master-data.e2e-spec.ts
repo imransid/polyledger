@@ -375,4 +375,25 @@ describe('/moulds', () => {
       .send({ status: 'REPAIR' })
       .expect(200);
   });
+
+  it('keeps a runner weight per shot, 0 for a hot runner, through other edits', async () => {
+    const product = await createProduct(owner);
+    const hot = (
+      await owner.post('/moulds').send(mould(product.id)).expect(201)
+    ).body;
+    expect(hot.runnerWeightMg).toBe(0);
+
+    const cold = (
+      await owner
+        .post('/moulds')
+        .send({ ...mould(product.id), code: 'M-02', runnerWeightMg: 1_500 })
+        .expect(201)
+    ).body;
+    const edited = await owner
+      .patch(`/moulds/${cold.id}`)
+      .send({ cavities: 2 })
+      .expect(200);
+
+    expect(edited.body).toMatchObject({ cavities: 2, runnerWeightMg: 1_500 });
+  });
 });

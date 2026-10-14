@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 import {
   Command,
   CommandHandler,
@@ -7,8 +7,7 @@ import {
 } from '@nestjs/cqrs';
 import { withIdempotencyKey } from '../../database/idempotency.js';
 import { PrismaService } from '../../database/prisma.service.js';
-import { itemKey, loadItems } from '../infra/items.js';
-import { postDocument, withEntries } from '../infra/ledger.js';
+import { reverseDocument } from '../infra/reversal.js';
 import type { StockDocumentView } from '../queries/get-stock-document.js';
 
 export class ReverseDocumentCommand extends Command<StockDocumentView> {
@@ -40,48 +39,19 @@ export class ReverseDocumentHandler implements ICommandHandler<ReverseDocumentCo
         tx,
         { actorId, key: idempotencyKey, command: 'ReverseDocument' },
         async () => {
-          // Locked so two people reversing the same document can't both win.
-          const [locked] = await tx.$queryRaw<{ id: string }[]>`
-            SELECT id FROM stock_documents WHERE id = ${documentId}::uuid FOR UPDATE`;
-          if (!locked) {
-            throw new NotFoundException('Stock document not found');
-          }
-          const original = await tx.stockDocument.findUniqueOrThrow({
+          const document = await tx.stockDocument.findUnique({
             where: { id: documentId },
-            include: withEntries,
           });
-          if (original.kind === 'REVERSAL') {
-            throw new ConflictException('A reversal cannot be reversed');
-          }
-          if (original.reversedAt) {
+          // Its production entry would no longer match the ledger.
+          if (document?.kind === 'PRODUCTION') {
             throw new ConflictException(
-              `${original.number} is already reversed`,
+              'Production entries are reversed from their job card',
             );
           }
-
-          const items = await loadItems(this.queryBus, original.entries);
-          const { document } = await postDocument(
-            tx,
-            {
-              kind: 'REVERSAL',
-              postedById: actorId,
-              reason,
-              reversesId: original.id,
-            },
-            original.entries.map((entry) => ({
-              item: items.get(itemKey(entry))!,
-              locationId: entry.locationId,
-              change: { by: -(entry.pieces ?? entry.grams) },
-              reversalOfId: entry.id,
-            })),
-          );
-          await tx.stockDocument.update({
-            where: { id: original.id },
-            data: { reversedAt: document.postedAt },
-          });
-          return tx.stockDocument.findUniqueOrThrow({
-            where: { id: document.id },
-            include: withEntries,
+          return reverseDocument(tx, this.queryBus, {
+            actorId,
+            documentId,
+            reason,
           });
         },
       ),

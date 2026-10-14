@@ -12,6 +12,7 @@ import { MachinesModule } from './machines/machines.module.js';
 import { MaterialsModule } from './materials/materials.module.js';
 import { MouldsModule } from './moulds/moulds.module.js';
 import { OrdersModule } from './orders/orders.module.js';
+import { ProductionModule } from './production/production.module.js';
 import { ProductsModule } from './products/products.module.js';
 import { StockModule } from './stock/stock.module.js';
 import { SuppliersModule } from './suppliers/suppliers.module.js';
@@ -37,6 +38,7 @@ import { SuppliersModule } from './suppliers/suppliers.module.js';
     FormulasModule,
     StockModule,
     OrdersModule,
+    ProductionModule,
   ],
   controllers: [HealthController],
   providers: [
