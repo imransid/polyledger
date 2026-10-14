@@ -5113,6 +5113,7 @@ export interface operations {
                         createdAt: string;
                         /** Format: date-time */
                         updatedAt: string;
+                        salesOrderNumber: string | null;
                     };
                 };
             };
@@ -7466,6 +7467,7 @@ export interface operations {
                             id: string;
                             number: string;
                             customerCode: string;
+                            customerName: string;
                             /** Format: date */
                             deliveryDate: string;
                             daysLate: number;
@@ -7568,6 +7570,7 @@ export interface operations {
                         id: string;
                         number: string;
                         customerCode: string;
+                        customerName: string;
                         vehicleNumber: string;
                         waitingMinutes: number;
                         waitedTooLong: boolean;

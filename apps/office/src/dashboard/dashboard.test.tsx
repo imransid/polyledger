@@ -41,6 +41,7 @@ const orders: OrderFigures = {
       id: '00000000-0000-4000-8000-000000000401',
       number: 'SO-000001',
       customerCode: 'CUS-PADMA',
+      customerName: 'Padma Drinks Ltd',
       deliveryDate: '2026-10-09',
       daysLate: 6,
     },
@@ -100,6 +101,7 @@ const gate: WaitingChallan[] = [
     id: '00000000-0000-4000-8000-000000000801',
     number: 'DC-000012',
     customerCode: 'CUS-PADMA',
+    customerName: 'Padma Drinks Ltd',
     vehicleNumber: 'DHAKA METRO-TA 11-2345',
     waitingMinutes: 125,
     waitedTooLong: true,
@@ -108,6 +110,7 @@ const gate: WaitingChallan[] = [
     id: '00000000-0000-4000-8000-000000000802',
     number: 'DC-000013',
     customerCode: 'CUS-PADMA',
+    customerName: 'Padma Drinks Ltd',
     vehicleNumber: 'DHAKA METRO-TA 22-1111',
     waitingMinutes: 10,
     waitedTooLong: false,
@@ -180,6 +183,8 @@ describe('dashboard', () => {
     );
     const mostLate = ordersCard.getByRole('link', { name: /SO-000001/ });
     expect(href(mostLate)).toBe(`/orders/${orders.mostLate[0].id}`);
+    expect(within(mostLate).getByText('Padma Drinks Ltd')).toBeTruthy();
+    expect(within(mostLate).getByText('CUS-PADMA')).toBeTruthy();
     expect(mostLate.textContent).toContain(words.orders.daysLate(6));
   });
 
@@ -250,6 +255,7 @@ describe('dashboard', () => {
     const long = gateCard.getByRole('link', { name: /DC-000012/ });
     expect(href(long)).toBe(`/dispatch/${gate[0].id}`);
     expect(long.textContent).toContain(words.gate.waited('2 h 5 min'));
+    expect(within(long).getByText('Padma Drinks Ltd')).toBeTruthy();
     expect(long.closest('li')!.className).toContain('amber');
     const short = gateCard.getByRole('link', { name: /DC-000013/ });
     expect(short.closest('li')!.className).not.toContain('amber');

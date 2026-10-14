@@ -11,6 +11,7 @@ import {
   entryResponse,
   entryWithWarningsResponse,
   issueSuggestionResponse,
+  jobCardDetailsResponse,
   jobCardResponse,
   machineBoardResponse,
   summaryResponse,
@@ -302,6 +303,22 @@ describe('production', () => {
       expect(await message({ productId: box, mouldId: boxMould }, 409)).toBe(
         'No active formula for BOX-01',
       );
+    });
+
+    it('shows the sales order number to everyone who reads the card', async () => {
+      const card = await createCard({ salesOrderId: salesOrder });
+      const forStock = await createCard({ mouldId: mould2 });
+      const number = (
+        await owner.get(`/sales-orders/${salesOrder}`).expect(200)
+      ).body.number;
+
+      expect(
+        (await operator.get(`/job-cards/${card.id}`).expect(200)).body,
+      ).toMatchObject({ salesOrderId: salesOrder, salesOrderNumber: number });
+      expect(
+        (await operator.get(`/job-cards/${forStock.id}`).expect(200)).body
+          .salesOrderNumber,
+      ).toBeNull();
     });
 
     it('releasing the first card puts its sales order in production', async () => {
@@ -820,7 +837,9 @@ describe('production', () => {
 
       jobCardResponse.strict().parse(card);
       pageOf(jobCardResponse.strict()).parse(await read('/job-cards'));
-      jobCardResponse.strict().parse(await read(`/job-cards/${card.id}`));
+      jobCardDetailsResponse
+        .strict()
+        .parse(await read(`/job-cards/${card.id}`));
       summaryResponse
         .strict()
         .parse(await read(`/job-cards/${card.id}/summary`));

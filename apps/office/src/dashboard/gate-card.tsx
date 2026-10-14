@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { api } from '@/api/client';
 import { unwrap } from '@/api/errors';
+import { CustomerName } from '@/components/customer-name';
 import { text } from '@/i18n';
 import { formatDuration } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -44,16 +45,20 @@ export function GateCard() {
                 >
                   <Link
                     to={`/dispatch/${challan.id}`}
-                    className="flex flex-wrap justify-between gap-x-3 underline-offset-4 hover:underline"
+                    className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-3 underline-offset-4 hover:underline"
                   >
-                    <span>
-                      <span className="font-medium">{challan.number}</span> ·{' '}
-                      {challan.customerCode} · {challan.vehicleNumber}
-                    </span>
-                    <span>
-                      {words.waited(
-                        formatDuration(challan.waitingMinutes * 60),
-                      )}
+                    <span className="font-medium">{challan.number}</span>
+                    <CustomerName
+                      name={challan.customerName}
+                      code={challan.customerCode}
+                    />
+                    <span className="text-right">
+                      {challan.vehicleNumber}
+                      <span className="block">
+                        {words.waited(
+                          formatDuration(challan.waitingMinutes * 60),
+                        )}
+                      </span>
                     </span>
                   </Link>
                 </li>

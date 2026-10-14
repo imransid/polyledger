@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { api } from '@/api/client';
 import { unwrap } from '@/api/errors';
 import type { SalesOrderStatus } from '@/api/types';
+import { CustomerName } from '@/components/customer-name';
 import { text } from '@/i18n';
 import { formatDay } from '@/lib/format';
 import { DashboardCard, Figure } from './parts';
@@ -59,13 +60,19 @@ export function OrdersCard() {
                   <li key={order.id}>
                     <Link
                       to={`/orders/${order.id}`}
-                      className="flex flex-wrap justify-between gap-x-3 text-destructive underline-offset-4 hover:underline"
+                      className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-3 text-destructive underline-offset-4 hover:underline"
                     >
-                      <span>
-                        <span className="font-medium">{order.number}</span> ·{' '}
-                        {order.customerCode} · {formatDay(order.deliveryDate)}
+                      <span className="font-medium">{order.number}</span>
+                      <CustomerName
+                        name={order.customerName}
+                        code={order.customerCode}
+                      />
+                      <span className="text-right">
+                        {formatDay(order.deliveryDate)}
+                        <span className="block">
+                          {words.daysLate(order.daysLate)}
+                        </span>
                       </span>
-                      <span>{words.daysLate(order.daysLate)}</span>
                     </Link>
                   </li>
                 ))}

@@ -330,6 +330,8 @@ export const en = {
     returned: 'Returned',
     remaining: 'Remaining',
     materialCheck: 'Material check',
+    coverage: (ordered: string, fromStock: string, toProduce: string) =>
+      `Ordered ${ordered} · From FG stock ${fromStock} · To produce ${toProduce}`,
     needed: 'Needed',
     available: 'In stores',
     short: 'Short',

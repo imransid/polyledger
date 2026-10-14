@@ -86,7 +86,7 @@ describe('documents', () => {
     ).toBeTruthy();
     // Challan, received and short, right-aligned.
     expect(screen.getByText('1.500 kg').className).toContain('text-right');
-    expect(screen.getByText('+1998.500 kg')).toBeTruthy();
+    expect(screen.getByText('+1,998.500 kg')).toBeTruthy();
   });
 
   it('reverses a document only after a confirmed reason, then shows the reversal', async () => {
@@ -207,7 +207,7 @@ describe('balances', () => {
     );
     const { user } = renderArea(<StockArea />, { mount, at: '/stock' });
 
-    const quantity = await screen.findByText('1250.500 kg');
+    const quantity = await screen.findByText('1,250.500 kg');
     expect(quantity.className).toContain('text-right');
     await user.click(screen.getByRole('link', { name: pp.code }));
 

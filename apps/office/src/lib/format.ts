@@ -35,9 +35,11 @@ const MOMENT = new Intl.DateTimeFormat('en-GB', {
   timeZone: FACTORY_TIME_ZONE,
 });
 
-/** Integer grams as kilograms with three decimals: "1250.500 kg". */
+/** Integer grams as kilograms with lakh grouping: "1,250.500 kg". */
 export function formatWeight(value: number): string {
-  return `${formatKilograms(grams(value))} kg`;
+  // Grouped from the exact text, never through a float.
+  const [whole, fraction] = formatKilograms(grams(value)).split('.');
+  return `${PIECES.format(Number(whole))}.${fraction} kg`;
 }
 
 /** Integer poisha as taka: "৳1,23,456.50". */
@@ -81,6 +83,11 @@ export function formatPercentChange(basisPoints: number): string {
 
 /** Stored as +8801712345678, shown as people write it: 01712345678. */
 export const formatPhone = toLocalPhone;
+
+/** A count with lakh grouping: "2,00,000". */
+export function formatCount(value: number): string {
+  return PIECES.format(value);
+}
 
 /** Whole pieces with lakh grouping: "1,20,000 pcs". */
 export function formatPieces(pieces: number): string {

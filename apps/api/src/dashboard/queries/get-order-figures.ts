@@ -24,6 +24,7 @@ export interface OrderFigures {
     id: string;
     number: string;
     customerCode: string;
+    customerName: string;
     deliveryDate: string;
     daysLate: number;
   }[];
@@ -45,7 +46,7 @@ export class GetOrderFiguresHandler implements IQueryHandler<GetOrderFiguresQuer
     const customers = await this.queryBus.execute(
       new GetCustomersQuery(overview.mostLate.map((order) => order.customerId)),
     );
-    const code = new Map(customers.map((c) => [c.id, c.code]));
+    const customer = new Map(customers.map((c) => [c.id, c]));
     return {
       today,
       dueBy,
@@ -54,7 +55,8 @@ export class GetOrderFiguresHandler implements IQueryHandler<GetOrderFiguresQuer
       mostLate: overview.mostLate.map((order) => ({
         id: order.id,
         number: order.number,
-        customerCode: code.get(order.customerId) ?? '',
+        customerCode: customer.get(order.customerId)?.code ?? '',
+        customerName: customer.get(order.customerId)?.name ?? '',
         deliveryDate: order.deliveryDate,
         daysLate: daysLate(order.deliveryDate, today),
       })),

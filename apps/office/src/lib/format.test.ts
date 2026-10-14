@@ -17,9 +17,12 @@ import {
 } from './format';
 
 describe('format', () => {
-  it('shows grams as kilograms with three decimals', () => {
-    expect(formatWeight(1_250_500)).toBe('1250.500 kg');
+  it('shows grams as kilograms with three decimals and lakh grouping', () => {
+    expect(formatWeight(5_498_500)).toBe('5,498.500 kg');
+    expect(formatWeight(123_456_789_500)).toBe('12,34,56,789.500 kg');
+    expect(formatWeight(999_999)).toBe('999.999 kg');
     expect(formatWeight(25)).toBe('0.025 kg');
+    expect(formatWeight(-1_250_500)).toBe('-1,250.500 kg');
   });
 
   it('shows poisha as taka with lakh grouping', () => {

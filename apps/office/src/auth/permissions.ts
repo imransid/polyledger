@@ -19,6 +19,13 @@ export function canManageStock(role: Role): boolean {
 }
 
 // The API's sales and production role lists.
+/** Open sales orders. */
+export const SALES_READERS: Role[] = [
+  'OWNER',
+  'MANAGER',
+  'SUPERVISOR',
+  'STOREKEEPER',
+];
 /** Create, change, confirm, cancel and close sales orders. */
 export const SALES_EDITORS: Role[] = ['OWNER', 'MANAGER'];
 /** Create, release, cancel and close job cards. */

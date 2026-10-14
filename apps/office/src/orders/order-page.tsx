@@ -15,6 +15,7 @@ import { ChallanStatusBadge } from '@/dispatch/parts';
 import { totalPieces } from '@/dispatch/use-dispatch';
 import { text } from '@/i18n';
 import {
+  formatCount,
   formatDay,
   formatMoney,
   formatPercent,
@@ -255,6 +256,20 @@ function MaterialCheck({ orderId }: { orderId: string }) {
         <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
           {check.error.message}
         </p>
+      )}
+      {check.data && (
+        <ul className="grid gap-1 text-sm">
+          {check.data.products.map((product) => (
+            <li key={product.productId}>
+              <span className="font-medium">{product.code}</span>{' '}
+              {words.coverage(
+                formatCount(product.orderedPieces),
+                formatCount(product.fromStockPieces),
+                formatCount(product.toProducePieces),
+              )}
+            </li>
+          ))}
+        </ul>
       )}
       {check.data && (
         <DataTable

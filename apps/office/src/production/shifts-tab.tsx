@@ -41,6 +41,7 @@ import { wholeNumber } from '@/lib/form-fields';
 import { formatDay, formatPieces, formatWeight } from '@/lib/format';
 import { useWrite } from '@/lib/use-write';
 import { Warnings } from './parts';
+import { useCardEntries } from './use-job-card';
 
 const words = text.production;
 const SHIFTS: Shift[] = ['A', 'B', 'C'];
@@ -51,16 +52,7 @@ export function ShiftsTab({ card }: { card: JobCard }) {
   const reads = PRODUCTION_READERS.includes(role);
   const records = ENTRY_RECORDERS.includes(role);
   const inWork = card.status === 'RELEASED' || card.status === 'RUNNING';
-  const entries = useQuery({
-    queryKey: ['job-cards', 'entries', card.id],
-    enabled: reads,
-    queryFn: () =>
-      unwrap(
-        api.GET('/job-cards/{id}/entries', {
-          params: { path: { id: card.id } },
-        }),
-      ),
-  });
+  const entries = useCardEntries(card.id, reads);
   const lastShotEnd = entries.data
     ?.filter((entry) => !entry.reversedAt)
     .at(-1)?.shotEnd;

@@ -46,7 +46,16 @@ function orderPage(current: () => SalesOrder, materialCheck?: () => Response) {
         : HttpResponse.json({
             orderId: current().id,
             number: current().number,
-            products: [],
+            products: [
+              {
+                productId: cap.id,
+                code: cap.code,
+                orderedPieces: 200_000,
+                fromStockPieces: 60_000,
+                toProducePieces: 140_000,
+                formulaVersion: 1,
+              },
+            ],
             materials: [
               {
                 rawMaterialId: '00000000-0000-4000-8000-0000000000a1',
@@ -91,6 +100,10 @@ describe('order list', () => {
       await screen.findByRole('link', { name: 'SO-000001' })
     ).closest('tr')!;
     expect(lateRow.className).toContain('border-l-destructive');
+    expect(within(lateRow).getByText(partner().name)).toBeTruthy();
+    expect(within(lateRow).getByText(partner().code).className).toContain(
+      'text-xs',
+    );
     expect(within(lateRow).getByText(words.late)).toBeTruthy();
     const onTimeRow = screen
       .getByRole('link', { name: 'SO-000002' })
@@ -263,6 +276,10 @@ describe('order page', () => {
     renderArea(<OrdersArea />, { mount, at: `/orders/${salesOrder().id}` });
 
     expect(await screen.findByText('50,000 pcs')).toBeTruthy();
+    const coverage = await screen.findByText(
+      words.coverage('2,00,000', '60,000', '1,40,000'),
+    );
+    expect(coverage.textContent).toMatch(/^CAP-28 Ordered/);
     const short = await screen.findByText('215.000 kg');
     expect(short.className).toContain('text-destructive');
     expect(screen.getByText('515.000 kg').closest('td')!.className).toContain(

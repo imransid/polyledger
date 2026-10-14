@@ -25,6 +25,11 @@ export const jobCardResponse = z.object({
   updatedAt: z.iso.datetime(),
 });
 
+export const jobCardDetailsResponse = jobCardResponse.safeExtend({
+  /** Shown to everyone who reads the card, operators included. */
+  salesOrderNumber: z.string().nullable(),
+});
+
 export const summaryResponse = z.object({
   plannedPieces: whole,
   goodPieces: whole,

@@ -58,6 +58,7 @@ import {
   entryResponse,
   entryWithWarningsResponse,
   issueSuggestionResponse,
+  jobCardDetailsResponse,
   jobCardResponse,
   summaryResponse,
   wasteEntryResponse,
@@ -185,7 +186,7 @@ export class JobCardsController {
   }
 
   @Get(':id')
-  @ApiOkResponse({ standardSchema: jobCardResponse })
+  @ApiOkResponse({ standardSchema: jobCardDetailsResponse })
   async get(@Param('id', ParseUUIDPipe) id: string) {
     return found(
       await this.queryBus.execute(new GetJobCardQuery(id)),

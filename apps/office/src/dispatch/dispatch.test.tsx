@@ -77,6 +77,7 @@ describe('challan list', () => {
     const row = (
       await screen.findByRole('link', { name: 'DC-000012' })
     ).closest('tr')!;
+    expect(within(row).getByText(partner().name)).toBeTruthy();
     expect(within(row).getByText(partner().code)).toBeTruthy();
     expect(within(row).getByText('24,040 pcs')).toBeTruthy();
     expect(within(row).getByText(words.gatePassStatuses.PENDING)).toBeTruthy();

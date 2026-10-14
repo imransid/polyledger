@@ -26,12 +26,17 @@ const card = jobCard();
 const pp = rawMaterial();
 
 /** The reads a job card page makes. */
-function cardPage(entries = [productionEntry()]) {
+function cardPage(
+  entries = [productionEntry()],
+  { current = card, materials = summary().materials } = {},
+) {
   return [
     ...productionLookups(),
-    http.get(`*/api/job-cards/${card.id}`, () => HttpResponse.json(card)),
+    http.get(`*/api/job-cards/${card.id}`, () =>
+      HttpResponse.json({ salesOrderNumber: null, ...current }),
+    ),
     http.get(`*/api/job-cards/${card.id}/summary`, () =>
-      HttpResponse.json(summary()),
+      HttpResponse.json(summary({ materials })),
     ),
     http.get(`*/api/job-cards/${card.id}/entries`, () =>
       HttpResponse.json(entries),
@@ -179,15 +184,81 @@ describe('job card page', () => {
       expect(
         await screen.findByRole('heading', { name: /JC-000001/ }),
       ).toBeTruthy();
-      const shown = Object.values(words.actions).filter(
-        (label) => screen.queryByRole('button', { name: label }) !== null,
-      );
-      expect(shown).toEqual(actions);
+      const shown = () =>
+        Object.values(words.actions).filter(
+          (label) => screen.queryByRole('button', { name: label }) !== null,
+        );
+      // Close waits for the card's entries and summary.
+      await waitFor(() => expect(shown()).toEqual(actions));
       for (const tab of [words.cardTabs.material, words.cardTabs.goods]) {
         expect(screen.queryByRole('button', { name: tab }) !== null).toBe(
           extraTabs.includes(tab),
         );
       }
+    },
+  );
+
+  const released = jobCard({ status: 'RELEASED' });
+  const reversed = productionEntry({ reversedAt: '2026-10-15T09:00:00.000Z' });
+  it.each([
+    ['production recorded', [productionEntry()], summary().materials, true],
+    ['material issued and no production', [], summary().materials, false],
+    ['only a reversed entry', [reversed], summary().materials, false],
+    ['nothing ever issued', [], [], true],
+  ])(
+    'offers Close on a card with %s: %s',
+    async (_case, entries, materials, closable) => {
+      server.use(...cardPage(entries, { current: released, materials }));
+      renderArea(<ProductionArea />, {
+        mount,
+        at: `/production/${card.id}`,
+      });
+
+      // Cancel stays for a released card either way.
+      expect(
+        await screen.findByRole('button', { name: words.actions.cancel }),
+      ).toBeTruthy();
+      if (closable) {
+        expect(
+          await screen.findByRole('button', { name: words.actions.close }),
+        ).toBeTruthy();
+      } else {
+        await screen.findByText(words.summary.difference);
+        expect(
+          screen.queryByRole('button', { name: words.actions.close }),
+        ).toBeNull();
+      }
+    },
+  );
+
+  it.each([
+    ['MANAGER', true],
+    ['OPERATOR', false],
+  ] as [Role, boolean][])(
+    'shows a %s the sales order number, linked: %s',
+    async (role, linked) => {
+      const orderId = '00000000-0000-4000-8000-000000000401';
+      server.use(
+        ...cardPage([], {
+          current: {
+            ...card,
+            salesOrderId: orderId,
+            salesOrderNumber: 'SO-000001',
+          } as typeof card,
+        }),
+      );
+      renderArea(<ProductionArea />, {
+        mount,
+        at: `/production/${card.id}`,
+        role,
+      });
+
+      expect(await screen.findByText('SO-000001')).toBeTruthy();
+      const link = screen.queryByRole('link', { name: 'SO-000001' });
+      expect(link?.getAttribute('href') ?? null).toBe(
+        linked ? `/orders/${orderId}` : null,
+      );
+      expect(screen.queryByText(words.salesOrder)).toBeTruthy();
     },
   );
 

@@ -142,12 +142,12 @@ describe('transfers', () => {
     await user.type(quantity, '1300');
     const post = screen.getByRole('button', { name: words.transfer.submit });
 
-    expect(await screen.findByText('Only 1250.500 kg available')).toBeTruthy();
+    expect(await screen.findByText('Only 1,250.500 kg available')).toBeTruthy();
     expect(post).toHaveProperty('disabled', true);
 
     await user.clear(quantity);
     await user.type(quantity, '1000');
-    expect(await screen.findByText('Available 1250.500 kg')).toBeTruthy();
+    expect(await screen.findByText('Available 1,250.500 kg')).toBeTruthy();
     expect(post).toHaveProperty('disabled', false);
     await user.click(post);
 
@@ -189,7 +189,7 @@ describe('adjustments', () => {
       '950',
     );
 
-    expect(await screen.findByText('Now 1000.000 kg')).toBeTruthy();
+    expect(await screen.findByText('Now 1,000.000 kg')).toBeTruthy();
     expect(screen.getByText('Difference −50.000 kg')).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: words.adjust.submit }));

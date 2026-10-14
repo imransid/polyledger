@@ -7,6 +7,7 @@ import { useAllCustomers } from '@/api/lookups';
 import type { Challan, GatePassStatus } from '@/api/types';
 import { DISPATCHERS } from '@/auth/permissions';
 import { useUser } from '@/auth/use-session';
+import { CustomerName } from '@/components/customer-name';
 import { DataTable } from '@/components/data-table';
 import { ErrorMessage } from '@/components/message';
 import { Pager } from '@/components/pager';
@@ -125,7 +126,15 @@ export function ChallanList() {
               header: words.date,
               cell: (challan) => formatDay(challan.dispatchedOn),
             },
-            { header: words.customer, cell: (challan) => challan.customerCode },
+            {
+              header: words.customer,
+              cell: (challan) => (
+                <CustomerName
+                  name={challan.customerName}
+                  code={challan.customerCode}
+                />
+              ),
+            },
             { header: words.order, cell: (challan) => challan.orderNumber },
             { header: words.vehicle, cell: (challan) => challan.vehicleNumber },
             {

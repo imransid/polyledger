@@ -41,7 +41,9 @@ export type SalesOrderStatus = SalesOrder['status'];
 export type OrderDelivery = Ok<'/sales-orders/{id}/delivery'>;
 export type MaterialCheck = Ok<'/sales-orders/{id}/material-check'>;
 export type MaterialShortages = Ok<'/sales-orders/material-shortages'>;
-export type JobCard = Ok<'/job-cards/{id}'>;
+export type JobCard = Ok<'/job-cards'>['items'][number];
+/** A job card read on its own: with its sales order number. */
+export type JobCardDetails = Ok<'/job-cards/{id}'>;
 export type JobCardStatus = JobCard['status'];
 export type CardSummary = Ok<'/job-cards/{id}/summary'>;
 export type IssueSuggestionLine =

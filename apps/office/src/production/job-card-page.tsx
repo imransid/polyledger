@@ -6,6 +6,7 @@ import { useAllMachines, useAllMoulds, useAllProducts } from '@/api/lookups';
 import type {
   CardSummary,
   JobCard,
+  JobCardDetails,
   Role,
   StockDocumentSummary,
 } from '@/api/types';
@@ -14,6 +15,7 @@ import {
   FLOOR_LEADS,
   JOB_PLANNERS,
   PRODUCTION_READERS,
+  SALES_READERS,
   STORE_STAFF,
 } from '@/auth/permissions';
 import { useUser } from '@/auth/use-session';
@@ -38,8 +40,10 @@ import { cn } from '@/lib/utils';
 import { useWrite } from '@/lib/use-write';
 import { GoodsTab } from './goods-tab';
 import { MaterialTab } from './material-tab';
+import { canClose } from './close-rule';
 import { JobCardStatusBadge } from './parts';
 import { ShiftsTab } from './shifts-tab';
+import { useCardEntries, useCardSummary } from './use-job-card';
 
 const words = text.production;
 
@@ -67,7 +71,7 @@ export function JobCardPage() {
   return <JobCardView card={card.data} />;
 }
 
-function JobCardView({ card }: { card: JobCard }) {
+function JobCardView({ card }: { card: JobCardDetails }) {
   const { role } = useUser();
   const filters = useUrlFilters();
   const products = useAllProducts();
@@ -105,12 +109,16 @@ function JobCardView({ card }: { card: JobCard }) {
           <>
             <dt className="text-muted-foreground">{words.salesOrder}</dt>
             <dd>
-              <Link
-                to={`/orders/${card.salesOrderId}`}
-                className="underline-offset-4 hover:underline"
-              >
-                {words.salesOrder}
-              </Link>
+              {SALES_READERS.includes(role) ? (
+                <Link
+                  to={`/orders/${card.salesOrderId}`}
+                  className="underline-offset-4 hover:underline"
+                >
+                  {card.salesOrderNumber}
+                </Link>
+              ) : (
+                card.salesOrderNumber
+              )}
             </dd>
           </>
         )}
@@ -152,6 +160,8 @@ function CardActions({ card }: { card: JobCard }) {
   };
   const plans = JOB_PLANNERS.includes(role);
   const leads = FLOOR_LEADS.includes(role);
+  const inWork = card.status === 'RELEASED' || card.status === 'RUNNING';
+  const closable = useClosable(card, plans && inWork);
   return (
     <>
       {plans && card.status === 'PLANNED' && (
@@ -185,7 +195,7 @@ function CardActions({ card }: { card: JobCard }) {
           {words.actions.stop}
         </Button>
       )}
-      {plans && (card.status === 'RELEASED' || card.status === 'RUNNING') && (
+      {closable && (
         <ConfirmButton
           label={words.actions.close}
           question={words.confirmClose(card.number)}
@@ -215,16 +225,19 @@ function CardActions({ card }: { card: JobCard }) {
   );
 }
 
+function useClosable(card: JobCard, asked: boolean): boolean {
+  const entries = useCardEntries(card.id, asked);
+  const summary = useCardSummary(card.id, asked);
+  return (
+    asked &&
+    entries.data !== undefined &&
+    summary.data !== undefined &&
+    canClose(entries.data, summary.data.materials)
+  );
+}
+
 function Overview({ card }: { card: JobCard }) {
-  const summary = useQuery({
-    queryKey: ['job-cards', 'summary', card.id],
-    queryFn: () =>
-      unwrap(
-        api.GET('/job-cards/{id}/summary', {
-          params: { path: { id: card.id } },
-        }),
-      ),
-  });
+  const summary = useCardSummary(card.id);
   return (
     <div className="grid gap-6">
       <ErrorMessage message={summary.error?.message} />

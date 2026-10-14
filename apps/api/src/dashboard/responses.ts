@@ -24,6 +24,7 @@ export const orderFiguresResponse = z.object({
       id: z.uuid(),
       number: z.string(),
       customerCode: z.string(),
+      customerName: z.string(),
       deliveryDate: z.iso.date(),
       daysLate: whole,
     }),
@@ -79,6 +80,7 @@ export const gateQueueResponse = z.array(
     id: z.uuid(),
     number: z.string(),
     customerCode: z.string(),
+    customerName: z.string(),
     vehicleNumber: z.string(),
     waitingMinutes: whole,
     /** Waiting more than an hour. */

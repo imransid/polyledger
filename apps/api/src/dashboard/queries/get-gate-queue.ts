@@ -11,6 +11,7 @@ export interface WaitingChallan {
   id: string;
   number: string;
   customerCode: string;
+  customerName: string;
   vehicleNumber: string;
   /** Since the challan was posted. */
   waitingMinutes: number;
@@ -35,6 +36,7 @@ export class GetGateQueueHandler implements IQueryHandler<GetGateQueueQuery> {
         id: challan.id,
         number: challan.number,
         customerCode: challan.customerCode,
+        customerName: challan.customerName,
         vehicleNumber: challan.vehicleNumber,
         waitingMinutes: waiting,
         waitedTooLong: waitedTooLong(waiting),

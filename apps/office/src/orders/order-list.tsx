@@ -7,6 +7,7 @@ import { useAllCustomers } from '@/api/lookups';
 import type { SalesOrder, SalesOrderStatus } from '@/api/types';
 import { SALES_EDITORS } from '@/auth/permissions';
 import { useUser } from '@/auth/use-session';
+import { CustomerName } from '@/components/customer-name';
 import { DataTable } from '@/components/data-table';
 import { ErrorMessage } from '@/components/message';
 import { Pager } from '@/components/pager';
@@ -44,8 +45,10 @@ export function OrderList() {
     queryFn: () => unwrap(api.GET('/sales-orders', { params: { query } })),
     placeholderData: keepPreviousData,
   });
-  const customerCode = (id: string) =>
-    customers.data?.find((customer) => customer.id === id)?.code ?? '';
+  const customer = (id: string) => {
+    const found = customers.data?.find((candidate) => candidate.id === id);
+    return found && <CustomerName name={found.name} code={found.code} />;
+  };
 
   return (
     <div className="grid gap-4">
@@ -156,7 +159,7 @@ export function OrderList() {
             },
             {
               header: words.customer,
-              cell: (order) => customerCode(order.customerId),
+              cell: (order) => customer(order.customerId),
             },
             { header: words.customerPo, cell: (order) => order.customerPo },
             {
