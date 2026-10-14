@@ -32,6 +32,7 @@ export class PostStockDocumentCommand extends Command<StockDocumentView> {
       kind: StockDocumentKind;
       postedById: string;
       jobCardId?: string;
+      reason?: string;
     },
     readonly lines: StockDocumentLine[],
   ) {

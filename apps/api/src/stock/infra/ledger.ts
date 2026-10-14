@@ -28,6 +28,10 @@ const NUMBER_PREFIX: Record<StockDocumentKind, string> = {
   PRODUCTION: 'PRD',
   HANDOVER: 'FGH',
   RETURN: 'RET',
+  WASTE: 'WST',
+  GRINDING: 'GRD',
+  SCRAP_SALE: 'SCR',
+  SCRAP_TRANSFER: 'SCT',
 };
 
 export interface Movement {

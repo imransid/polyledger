@@ -32,3 +32,14 @@ export function toSafeNumber(value: bigint): number {
   }
   return number;
 }
+
+// part / whole in basis points (2.35% is 235), rounded half up; null when
+// there is no whole to compare against.
+export function basisPointsOf(part: number, whole: number): number | null {
+  if (whole === 0) {
+    return null;
+  }
+  return toSafeNumber(
+    (BigInt(part) * 20_000n + BigInt(whole)) / (BigInt(whole) * 2n),
+  );
+}

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
-import { grams, type Grams } from '@polyledger/shared';
+import { grams, gramsForPieces, type Grams } from '@polyledger/shared';
 import { toSafeNumber } from '../../common/quantities.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { JobCard } from '../../generated/prisma/client.js';
@@ -11,6 +11,8 @@ import { type JobCardSummary, summarize } from '../domain/summary.js';
 export interface FloorStock {
   issued: Map<string, Grams>;
   returned: Map<string, Grams>;
+  /** Taken off the floor by waste entries: purge and sweepings. */
+  purgeAndSweepings: Map<string, Grams>;
   /** Good pieces produced on this card and not yet handed over. */
   piecesOnFloor: number;
 }
@@ -29,6 +31,7 @@ export class JobCardReporter {
     const stock: FloorStock = {
       issued: new Map(),
       returned: new Map(),
+      purgeAndSweepings: new Map(),
       piecesOnFloor: 0,
     };
     for (const line of lines) {
@@ -38,13 +41,15 @@ export class JobCardReporter {
         stock.issued.set(line.itemId, grams(line.grams));
       } else if (line.kind === 'RETURN') {
         stock.returned.set(line.itemId, grams(-line.grams));
+      } else if (line.kind === 'WASTE') {
+        stock.purgeAndSweepings.set(line.itemId, grams(-line.grams));
       }
     }
     return stock;
   }
 
   async summary(card: JobCard): Promise<JobCardSummary> {
-    const [stock, [pieces], used] = await Promise.all([
+    const [stock, [pieces], used, [weighed]] = await Promise.all([
       this.floorStock(card),
       this.prisma.$queryRaw<{ good: bigint; rejected: bigint }[]>`
         SELECT COALESCE(SUM(good_pieces), 0)::bigint AS good,
@@ -61,12 +66,19 @@ export class JobCardReporter {
         JOIN production_entries e ON e.id = m.entry_id
         WHERE e.job_card_id = ${card.id}::uuid AND e.reversed_at IS NULL
         GROUP BY m.raw_material_id`,
+      this.prisma.$queryRaw<{ grams: bigint }[]>`
+        SELECT COALESCE(SUM(l.grams), 0)::bigint AS grams
+        FROM waste_entry_lines l
+        JOIN waste_entries e ON e.id = l.entry_id
+        WHERE e.job_card_id = ${card.id}::uuid AND e.reversed_at IS NULL
+          AND l.waste_type IN ('RUNNER', 'REJECT')`,
     ]);
 
     const materialIds = [
       ...new Set([
         ...stock.issued.keys(),
         ...stock.returned.keys(),
+        ...stock.purgeAndSweepings.keys(),
         ...used.map((row) => row.rawMaterialId),
       ]),
     ];
@@ -74,12 +86,16 @@ export class JobCardReporter {
       new GetRawMaterialsQuery(materialIds),
     );
 
+    const rejectedPieces = toSafeNumber(pieces.rejected);
     return summarize({
       plannedPieces: card.plannedPieces,
       goodPieces: toSafeNumber(pieces.good),
-      rejectedPieces: toSafeNumber(pieces.rejected),
+      rejectedPieces,
+      rejectedGrams: gramsForPieces(rejectedPieces, card.pieceWeightMg),
       issued: stock.issued,
       returned: stock.returned,
+      purgeAndSweepings: stock.purgeAndSweepings,
+      weighedRejectAndRunnerGrams: grams(toSafeNumber(weighed.grams)),
       used: new Map(
         used.map((row) => [
           row.rawMaterialId,

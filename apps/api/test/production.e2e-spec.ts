@@ -663,6 +663,7 @@ describe('production', () => {
             issuedGrams: 500,
             usedForPiecesGrams: 52,
             usedForRunnersGrams: 10,
+            usedForPurgeAndSweepingsGrams: 0,
             returnedGrams: 0,
             differenceGrams: 438,
           },
@@ -673,10 +674,17 @@ describe('production', () => {
             issuedGrams: 20_000,
             usedForPiecesGrams: 2_548,
             usedForRunnersGrams: 510,
+            usedForPurgeAndSweepingsGrams: 0,
             returnedGrams: 2_000,
             differenceGrams: 14_942,
           },
         ],
+        // No waste weighed yet: 40 rejects x 2.5 g and 520 g of runners.
+        waste: {
+          expectedRejectAndRunnerGrams: 620,
+          weighedRejectAndRunnerGrams: 0,
+          differenceGrams: 620,
+        },
       });
       expect(
         (await owner.get(`/job-cards/${card.id}/summary`).expect(200)).body,

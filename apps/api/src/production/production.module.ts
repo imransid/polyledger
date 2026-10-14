@@ -5,21 +5,26 @@ import { CreateJobCardHandler } from './commands/create-job-card.js';
 import { HandOverGoodsHandler } from './commands/hand-over-goods.js';
 import { IssueMaterialHandler } from './commands/issue-material.js';
 import { RecordProductionHandler } from './commands/record-production.js';
+import { RecordWasteHandler } from './commands/record-waste.js';
 import { ReleaseJobCardHandler } from './commands/release-job-card.js';
 import { ReturnMaterialHandler } from './commands/return-material.js';
 import { ReverseProductionEntryHandler } from './commands/reverse-production-entry.js';
+import { ReverseWasteEntryHandler } from './commands/reverse-waste-entry.js';
 import { StartJobCardHandler } from './commands/start-job-card.js';
 import { StopJobCardHandler } from './commands/stop-job-card.js';
 import { JobCardReporter } from './infra/job-card-reporter.js';
 import { JobCardsController } from './job-cards.controller.js';
+import { ProductionReportsController } from './production-reports.controller.js';
 import { GetIssueSuggestionHandler } from './queries/get-issue-suggestion.js';
 import { GetJobCardSummaryHandler } from './queries/get-job-card-summary.js';
 import { GetJobCardHandler } from './queries/get-job-card.js';
+import { GetWasteReportHandler } from './queries/get-waste-report.js';
 import { ListJobCardsHandler } from './queries/list-job-cards.js';
 import { ListProductionEntriesHandler } from './queries/list-production-entries.js';
+import { ListWasteEntriesHandler } from './queries/list-waste-entries.js';
 
 @Module({
-  controllers: [JobCardsController],
+  controllers: [JobCardsController, ProductionReportsController],
   providers: [
     JobCardReporter,
     CreateJobCardHandler,
@@ -33,11 +38,15 @@ import { ListProductionEntriesHandler } from './queries/list-production-entries.
     ReverseProductionEntryHandler,
     HandOverGoodsHandler,
     ReturnMaterialHandler,
+    RecordWasteHandler,
+    ReverseWasteEntryHandler,
     ListJobCardsHandler,
     GetJobCardHandler,
     ListProductionEntriesHandler,
     GetIssueSuggestionHandler,
     GetJobCardSummaryHandler,
+    ListWasteEntriesHandler,
+    GetWasteReportHandler,
   ],
 })
 export class ProductionModule {}

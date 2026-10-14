@@ -43,3 +43,11 @@ export function found<T>(record: T | null | undefined, label: string): T {
   }
   return record;
 }
+
+/** Factory dates, from and to both included. */
+export const dateRangeQuery = z
+  .object({ from: z.iso.date(), to: z.iso.date() })
+  .refine((range) => range.from <= range.to, {
+    message: 'from cannot be after to',
+    path: ['to'],
+  });

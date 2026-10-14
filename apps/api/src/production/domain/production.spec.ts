@@ -59,11 +59,14 @@ describe('summarize', () => {
       plannedPieces: 10_000,
       goodPieces: 1_000,
       rejectedPieces: 40,
+      rejectedGrams: grams(100),
       issued: new Map([['pp', grams(20_000)]]),
       returned: new Map([['pp', grams(2_000)]]),
+      purgeAndSweepings: new Map([['pp', grams(1_225)]]),
       used: new Map([
         ['pp', { pieceGrams: grams(2_548), runnerGrams: grams(510) }],
       ]),
+      weighedRejectAndRunnerGrams: grams(600),
       materials: new Map([['pp', { code: 'RM-PP-01', name: 'PP' }]]),
     });
 
@@ -74,9 +77,16 @@ describe('summarize', () => {
         issuedGrams: 20_000,
         usedForPiecesGrams: 2_548,
         usedForRunnersGrams: 510,
+        usedForPurgeAndSweepingsGrams: 1_225,
         returnedGrams: 2_000,
-        differenceGrams: 14_942,
+        differenceGrams: 13_717,
       }),
     ]);
+    // 100 g of rejects and 510 g of runners expected, 600 g weighed.
+    expect(summary.waste).toEqual({
+      expectedRejectAndRunnerGrams: 610,
+      weighedRejectAndRunnerGrams: 600,
+      differenceGrams: 10,
+    });
   });
 });

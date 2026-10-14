@@ -35,6 +35,9 @@ model User {
   jobCards           JobCard[]
   operatedEntries    ProductionEntry[]  @relation("EntryOperator")
   recordedEntries    ProductionEntry[]  @relation("EntryRecorder")
+  wasteEntries       WasteEntry[]
+  grindingBatches    GrindingBatch[]
+  scrapSales         ScrapSale[]
 
   @@map("users")
 }
@@ -243,6 +246,10 @@ enum StockDocumentKind {
   PRODUCTION
   HANDOVER
   RETURN
+  WASTE
+  GRINDING
+  SCRAP_SALE
+  SCRAP_TRANSFER
 }
 
 enum StockItemType {
@@ -424,6 +431,7 @@ model JobCard {
   formulaVersion   FormulaVersion    @relation(fields: [formulaVersionId], references: [id])
   createdBy        User              @relation(fields: [createdById], references: [id])
   entries          ProductionEntry[]
+  wasteEntries     WasteEntry[]
   stockDocuments   StockDocument[]
 
   @@unique([machineId], map: "job_cards_one_running_per_machine", where: { status: "RUNNING" })
@@ -473,4 +481,101 @@ model ProductionEntryMaterial {
 
   @@id([entryId, rawMaterialId])
   @@map("production_entry_materials")
+}
+
+enum WasteType {
+  RUNNER
+  REJECT
+  PURGE
+  SWEEPINGS
+}
+
+/// Waste weighed in sacks at the machine, into one REGRIND material at a
+/// scrap yard. Runners and rejects were already consumed by backflush; purge
+/// and sweepings also consume floor material when recorded.
+model WasteEntry {
+  id              String           @id @default(uuid(7)) @db.Uuid
+  jobCardId       String           @map("job_card_id") @db.Uuid
+  /// The date the shift started: night shift C keeps its start date.
+  shiftDate       DateTime         @map("shift_date") @db.Date
+  shift           Shift
+  wasteMaterialId String           @map("waste_material_id") @db.Uuid
+  scrapLocationId String           @map("scrap_location_id") @db.Uuid
+  stockDocumentId String           @unique @map("stock_document_id") @db.Uuid
+  reversedAt      DateTime?        @map("reversed_at") @db.Timestamptz(3)
+  recordedById    String           @map("recorded_by_id") @db.Uuid
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  jobCard         JobCard          @relation(fields: [jobCardId], references: [id])
+  recordedBy      User             @relation(fields: [recordedById], references: [id])
+  lines           WasteEntryLine[]
+
+  @@unique([jobCardId, shiftDate, shift], map: "waste_entries_one_per_shift", where: { reversedAt: null })
+  @@index([jobCardId])
+  @@map("waste_entries")
+}
+
+model WasteEntryLine {
+  entryId   String     @map("entry_id") @db.Uuid
+  wasteType WasteType  @map("waste_type")
+  grams     Int
+  entry     WasteEntry @relation(fields: [entryId], references: [id])
+
+  @@id([entryId, wasteType])
+  @@map("waste_entry_lines")
+}
+
+/// One batch through the grinder: unground regrind or scrapped products in
+/// from a scrap yard, ground regrind out to a raw material store.
+model GrindingBatch {
+  id               String        @id @default(uuid(7)) @db.Uuid
+  stockDocumentId  String        @unique @map("stock_document_id") @db.Uuid
+  scrapLocationId  String        @map("scrap_location_id") @db.Uuid
+  storeLocationId  String        @map("store_location_id") @db.Uuid
+  inputItemType    StockItemType @map("input_item_type")
+  inputItemId      String        @map("input_item_id") @db.Uuid
+  /// Products only; their input grams are pieces x piece weight.
+  inputPieces      Int?          @map("input_pieces")
+  inputGrams       Int           @map("input_grams")
+  outputMaterialId String        @map("output_material_id") @db.Uuid
+  outputGrams      Int           @map("output_grams")
+  groundOn         DateTime      @map("ground_on") @db.Date
+  reversedAt       DateTime?     @map("reversed_at") @db.Timestamptz(3)
+  recordedById     String        @map("recorded_by_id") @db.Uuid
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  recordedBy       User          @relation(fields: [recordedById], references: [id])
+
+  @@index([groundOn])
+  @@map("grinding_batches")
+}
+
+model ScrapSale {
+  id              String          @id @default(uuid(7)) @db.Uuid
+  stockDocumentId String          @unique @map("stock_document_id") @db.Uuid
+  buyerName       String          @map("buyer_name")
+  soldOn          DateTime        @map("sold_on") @db.Date
+  scrapLocationId String          @map("scrap_location_id") @db.Uuid
+  reversedAt      DateTime?       @map("reversed_at") @db.Timestamptz(3)
+  recordedById    String          @map("recorded_by_id") @db.Uuid
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  recordedBy      User            @relation(fields: [recordedById], references: [id])
+  lines           ScrapSaleLine[]
+
+  @@index([soldOn])
+  @@map("scrap_sales")
+}
+
+model ScrapSaleLine {
+  saleId           String        @map("sale_id") @db.Uuid
+  lineNo           Int           @map("line_no")
+  itemType         StockItemType @map("item_type")
+  itemId           String        @map("item_id") @db.Uuid
+  /// Products only; their grams are pieces x piece weight.
+  pieces           Int?
+  grams            Int
+  pricePerKgPoisha Int           @map("price_per_kg_poisha")
+  amountPoisha     Int           @map("amount_poisha")
+  sale             ScrapSale     @relation(fields: [saleId], references: [id])
+
+  @@id([saleId, lineNo])
+  @@map("scrap_sale_lines")
 }

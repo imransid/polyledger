@@ -24,16 +24,18 @@ import {
   kilogramsSchema,
   piecesSchema,
 } from '../common/quantities.js';
-import { JobCardStatus, Shift } from '../generated/prisma/client.js';
+import { JobCardStatus, Shift, WasteType } from '../generated/prisma/client.js';
 import { CancelJobCardCommand } from './commands/cancel-job-card.js';
 import { CloseJobCardCommand } from './commands/close-job-card.js';
 import { CreateJobCardCommand } from './commands/create-job-card.js';
 import { HandOverGoodsCommand } from './commands/hand-over-goods.js';
 import { IssueMaterialCommand } from './commands/issue-material.js';
 import { RecordProductionCommand } from './commands/record-production.js';
+import { RecordWasteCommand } from './commands/record-waste.js';
 import { ReleaseJobCardCommand } from './commands/release-job-card.js';
 import { ReturnMaterialCommand } from './commands/return-material.js';
 import { ReverseProductionEntryCommand } from './commands/reverse-production-entry.js';
+import { ReverseWasteEntryCommand } from './commands/reverse-waste-entry.js';
 import { StartJobCardCommand } from './commands/start-job-card.js';
 import { StopJobCardCommand } from './commands/stop-job-card.js';
 import { GetIssueSuggestionQuery } from './queries/get-issue-suggestion.js';
@@ -41,6 +43,7 @@ import { GetJobCardSummaryQuery } from './queries/get-job-card-summary.js';
 import { GetJobCardQuery } from './queries/get-job-card.js';
 import { ListJobCardsQuery } from './queries/list-job-cards.js';
 import { ListProductionEntriesQuery } from './queries/list-production-entries.js';
+import { ListWasteEntriesQuery } from './queries/list-waste-entries.js';
 import {
   ENTRY_RECORDERS,
   FLOOR_LEADS,
@@ -89,13 +92,15 @@ const handoverBody = z.object({
 
 const shotCounter = z.number().int().min(0).max(INT_MAX);
 
+const shiftDate = z.iso
+  .date()
+  .describe(
+    'The date the shift started. Night shift C keeps its start date, even after midnight.',
+  );
+
 const entryBody = z
   .object({
-    shiftDate: z.iso
-      .date()
-      .describe(
-        'The date the shift started. Night shift C keeps its start date, even after midnight.',
-      ),
+    shiftDate,
     shift: z.enum(Shift),
     operatorId: z.uuid(),
     shotStart: shotCounter,
@@ -107,6 +112,39 @@ const entryBody = z
     message: 'The shot counter end cannot be before its start',
     path: ['shotEnd'],
   });
+
+const wasteBody = z.object({
+  shiftDate,
+  shift: z.enum(Shift),
+  wasteMaterialId: z.uuid(),
+  scrapLocationId: z.uuid(),
+  lines: z
+    .array(
+      z.object({ wasteType: z.enum(WasteType), kilograms: kilogramsSchema }),
+    )
+    .min(1)
+    .refine(
+      (lines) =>
+        new Set(lines.map((line) => line.wasteType)).size === lines.length,
+      'Each waste type can appear only once',
+    )
+    .refine(
+      (lines) => lines.every((line) => line.kilograms > 0),
+      'Weights must be more than zero',
+    )
+    // All of it lands on one ledger row at the scrap yard.
+    .refine(
+      (lines) =>
+        lines.reduce((sum, line) => sum + line.kilograms, 0) <= INT_MAX,
+      'The total weight is too large',
+    )
+    .transform((lines) =>
+      lines.map((line) => ({
+        wasteType: line.wasteType,
+        grams: line.kilograms,
+      })),
+    ),
+});
 
 const reasonBody = z.object({ reason: z.string().trim().min(1).max(300) });
 
@@ -162,6 +200,12 @@ export class JobCardsController {
   @Get(':id/entries')
   entries(@Param('id', ParseUUIDPipe) id: string) {
     return this.queryBus.execute(new ListProductionEntriesQuery(id));
+  }
+
+  @Roles(...PRODUCTION_READERS)
+  @Get(':id/waste')
+  waste(@Param('id', ParseUUIDPipe) id: string) {
+    return this.queryBus.execute(new ListWasteEntriesQuery(id));
   }
 
   @Roles(...JOB_PLANNERS)
@@ -328,6 +372,45 @@ export class JobCardsController {
   ) {
     return this.commandBus.execute(
       new ReverseProductionEntryCommand(
+        user.id,
+        id,
+        entryId,
+        body.reason,
+        idempotencyKey,
+      ),
+    );
+  }
+
+  /**
+   * Weighed waste for one shift, into one REGRIND material at a scrap yard.
+   * Purge and sweepings also take raw material off the floor by the card's
+   * formula. One waste entry per job card, date and shift; reverse it to
+   * record it again.
+   */
+  @Roles(...ENTRY_RECORDERS)
+  @Post(':id/waste')
+  recordWaste(
+    @CurrentUser() user: AuthUser,
+    @IdempotencyKey() idempotencyKey: string | undefined,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body({ schema: wasteBody }) body: z.infer<typeof wasteBody>,
+  ) {
+    return this.commandBus.execute(
+      new RecordWasteCommand(user.id, id, body, idempotencyKey),
+    );
+  }
+
+  @Roles(...FLOOR_LEADS)
+  @Post(':id/waste/:entryId/reverse')
+  reverseWaste(
+    @CurrentUser() user: AuthUser,
+    @IdempotencyKey() idempotencyKey: string | undefined,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('entryId', ParseUUIDPipe) entryId: string,
+    @Body({ schema: reasonBody }) body: z.infer<typeof reasonBody>,
+  ) {
+    return this.commandBus.execute(
+      new ReverseWasteEntryCommand(
         user.id,
         id,
         entryId,
