@@ -18,6 +18,7 @@ export interface SalesOrderFilter extends ListQuery {
   customerId?: string;
   deliveryFrom?: string;
   deliveryTo?: string;
+  open?: boolean;
   late?: boolean;
 }
 
@@ -39,6 +40,7 @@ export class ListSalesOrdersHandler implements IQueryHandler<ListSalesOrdersQuer
     const where: Prisma.SalesOrderWhereInput = {
       AND: [
         { status: filter.status, customerId: filter.customerId },
+        filter.open ? { status: { in: OPEN } } : {},
         {
           deliveryDate: {
             gte: filter.deliveryFrom && fromDateString(filter.deliveryFrom),

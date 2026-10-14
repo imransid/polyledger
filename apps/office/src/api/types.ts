@@ -67,6 +67,11 @@ export type WasteReportGroup = NonNullable<
   paths['/production/waste-report']['get']['parameters']['query']
 >['groupBy'];
 export type ScrapReason = Sent<'/scrap/transfers'>['reason'];
+export type TodayFigures = Ok<'/dashboard/today'>;
+export type OrderFigures = Ok<'/dashboard/orders'>;
+export type StockFigures = Ok<'/dashboard/stock'>;
+export type LeakFigures = Ok<'/dashboard/leaks'>;
+export type WaitingChallan = Ok<'/dashboard/gate'>[number];
 export type Operator = Ok<'/users/operators'>[number];
 
 export interface Page<T> {

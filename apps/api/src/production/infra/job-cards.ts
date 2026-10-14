@@ -63,7 +63,7 @@ export async function moveJobCard(
   tx: Prisma.TransactionClient,
   id: string,
   action: JobCardAction,
-  details: { cancelReason?: string } = {},
+  details: { cancelReason?: string; closedAt?: Date } = {},
 ): Promise<JobCardView> {
   const { from, to, done } = TRANSITIONS[action];
   const { count } = await tx.jobCard.updateMany({

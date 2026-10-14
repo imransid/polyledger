@@ -4,10 +4,12 @@ import {
   formatChange,
   formatDuration,
   formatDay,
+  formatDayOfMonth,
   formatGrams,
   formatMoment,
   formatMoney,
   formatPercent,
+  formatPercentChange,
   formatPhone,
   formatPieces,
   formatSeconds,
@@ -44,6 +46,13 @@ describe('format', () => {
     expect(formatPieces(120_000)).toBe('1,20,000 pcs');
     expect(formatChange('RAW_MATERIAL', 12_500)).toBe('+12.500 kg');
     expect(formatChange('PRODUCT', -300)).toBe('−300 pcs');
+  });
+
+  it('signs a percentage change and shortens a chart date', () => {
+    expect(formatPercentChange(125)).toBe('+1.25%');
+    expect(formatPercentChange(-40)).toBe('−0.40%');
+    expect(formatPercentChange(0)).toBe('0.00%');
+    expect(formatDayOfMonth('2026-10-09')).toBe('9 Oct');
   });
 
   it('counts whole cartons and the loose pieces left over', () => {

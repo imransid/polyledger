@@ -34,6 +34,7 @@ export function OrderList() {
     customerId: filters.value('customer') || undefined,
     deliveryFrom: filters.value('from') || undefined,
     deliveryTo: filters.value('to') || undefined,
+    open: filters.value('open') === 'true' ? ('true' as const) : undefined,
     late: filters.value('late') === 'true' ? ('true' as const) : undefined,
     page: filters.page,
     pageSize: PAGE_SIZE,
@@ -99,6 +100,16 @@ export function OrderList() {
             value={filters.value('to')}
             onChange={(event) => filters.change('to', event.target.value)}
           />
+        </label>
+        <label className="flex h-9 items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={filters.value('open') === 'true'}
+            onChange={(event) =>
+              filters.change('open', String(event.target.checked))
+            }
+          />
+          {words.openOnly}
         </label>
         <label className="flex h-9 items-center gap-2 text-sm">
           <input

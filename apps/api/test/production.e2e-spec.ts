@@ -671,6 +671,7 @@ describe('production', () => {
       const closed = (await act(card.id, 'close').expect(200)).body;
 
       expect(closed.status).toBe('CLOSED');
+      expect(Date.now() - Date.parse(closed.closedAt)).toBeLessThan(60_000);
       expect(closed.summary).toEqual({
         plannedPieces: 10_000,
         goodPieces: 1_000,

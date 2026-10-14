@@ -9,6 +9,7 @@ import { ReverseDocumentHandler } from './commands/reverse-document.js';
 import { ReverseStockDocumentHandler } from './commands/reverse-stock-document.js';
 import { UpdateLocationHandler } from './commands/update-location.js';
 import { LocationsController } from './locations.controller.js';
+import { GetFinishedGoodsHandler } from './queries/get-finished-goods.js';
 import { GetLocationHandler } from './queries/get-location.js';
 import { GetJobCardStockHandler } from './queries/get-job-card-stock.js';
 import { GetStockCardHandler } from './queries/get-stock-card.js';
@@ -45,6 +46,7 @@ import { StockReportsController } from './stock-reports.controller.js';
     ListBalancesHandler,
     GetStockCardHandler,
     ListLowStockHandler,
+    GetFinishedGoodsHandler,
     ListReceiptShortagesHandler,
     GetStockTotalsHandler,
     GetJobCardStockHandler,

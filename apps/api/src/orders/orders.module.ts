@@ -12,6 +12,7 @@ import { MaterialPlanner } from './infra/material-planner.js';
 import { GetMaterialCheckHandler } from './queries/get-material-check.js';
 import { GetMaterialShortagesHandler } from './queries/get-material-shortages.js';
 import { GetOrderDeliveryHandler } from './queries/get-order-delivery.js';
+import { GetOrderOverviewHandler } from './queries/get-order-overview.js';
 import { GetSalesOrderHandler } from './queries/get-sales-order.js';
 import { GetSalesOrdersHandler } from './queries/get-sales-orders.js';
 import { ListSalesOrdersHandler } from './queries/list-sales-orders.js';
@@ -33,6 +34,7 @@ import { SalesOrdersController } from './sales-orders.controller.js';
     ListSalesOrdersHandler,
     GetSalesOrderHandler,
     GetSalesOrdersHandler,
+    GetOrderOverviewHandler,
     GetMaterialCheckHandler,
     GetMaterialShortagesHandler,
     GetOrderDeliveryHandler,

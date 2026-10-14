@@ -106,6 +106,11 @@ const orderList = listQuery.extend({
   customerId: z.uuid().optional(),
   deliveryFrom: z.iso.date().optional(),
   deliveryTo: z.iso.date().optional(),
+  open: z
+    .enum(['true', 'false'])
+    .transform((value) => value === 'true')
+    .optional()
+    .describe('Only orders that still owe the customer something'),
   late: z
     .enum(['true', 'false'])
     .transform((value) => value === 'true')

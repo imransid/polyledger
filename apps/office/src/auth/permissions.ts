@@ -40,6 +40,9 @@ export const PRODUCTION_READERS: Role[] = [
   'STOREKEEPER',
 ];
 
+/** The home page dashboard. */
+export const DASHBOARD_READERS: Role[] = ['OWNER', 'MANAGER'];
+
 // The API's dispatch and scrap role lists.
 /** Post delivery challans. */
 export const DISPATCHERS: Role[] = ['OWNER', 'MANAGER', 'STOREKEEPER'];

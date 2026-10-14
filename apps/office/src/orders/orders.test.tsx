@@ -99,6 +99,9 @@ describe('order list', () => {
 
     await user.click(screen.getByLabelText(words.lateOnly));
     await waitFor(() => expect(asked.at(-1)?.get('late')).toBe('true'));
+
+    await user.click(screen.getByLabelText(words.openOnly));
+    await waitFor(() => expect(asked.at(-1)?.get('open')).toBe('true'));
   });
 
   it('offers New only to owners and managers', async () => {

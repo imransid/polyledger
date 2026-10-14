@@ -228,6 +228,7 @@ export const jobCard = (fields: Partial<JobCard> = {}): JobCard => ({
   plannedStartDate: '2026-10-15',
   status: 'RUNNING',
   cancelReason: null,
+  closedAt: null,
   createdById: signedIn('MANAGER').id,
   ...stamps,
   ...fields,

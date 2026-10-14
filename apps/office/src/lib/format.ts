@@ -19,6 +19,12 @@ const DAY = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'UTC',
 });
 
+const DAY_OF_MONTH = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+});
+
 // Timestamps are stored in UTC and read in Bangladesh time.
 const MOMENT = new Intl.DateTimeFormat('en-GB', {
   day: 'numeric',
@@ -42,6 +48,11 @@ export function formatDay(day: string): string {
   return DAY.format(new Date(`${day}T00:00:00Z`));
 }
 
+/** A factory date without its year, for a chart: "14 Oct". */
+export function formatDayOfMonth(day: string): string {
+  return DAY_OF_MONTH.format(new Date(`${day}T00:00:00Z`));
+}
+
 /** A UTC timestamp in Bangladesh time: "15 Oct 2026, 02:30". */
 export function formatMoment(timestamp: string): string {
   return MOMENT.format(new Date(timestamp));
@@ -60,6 +71,12 @@ export function formatSeconds(tenths: number): string {
 /** Basis points: "97.50%". */
 export function formatPercent(basisPoints: number): string {
   return `${formatDecimal(basisPoints, 2, { keepZeros: true })}%`;
+}
+
+/** Signed basis points: "+1.25%", "−0.40%". */
+export function formatPercentChange(basisPoints: number): string {
+  const sign = basisPoints > 0 ? '+' : basisPoints < 0 ? '−' : '';
+  return `${sign}${formatPercent(Math.abs(basisPoints))}`;
 }
 
 /** Stored as +8801712345678, shown as people write it: 01712345678. */

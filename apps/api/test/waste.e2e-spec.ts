@@ -528,6 +528,33 @@ describe('waste', () => {
         wasteGrams: 3_600,
         materialUsedGrams: 4_120 + 3_120 + 2_000,
       });
+      expect(
+        (await wasteReport('day', '2026-10-15', '2026-10-16').expect(200)).body,
+      ).toEqual([
+        {
+          key: '2026-10-15',
+          label: '2026-10-15',
+          runnerGrams: 500,
+          rejectGrams: 150,
+          purgeGrams: 1_000,
+          sweepingsGrams: 0,
+          wasteGrams: 1_650,
+          materialUsedGrams: 5_370,
+          wasteBasisPoints: 3_073,
+        },
+        {
+          key: '2026-10-16',
+          label: '2026-10-16',
+          runnerGrams: 0,
+          rejectGrams: 0,
+          purgeGrams: 2_000,
+          sweepingsGrams: 0,
+          wasteGrams: 2_000,
+          materialUsedGrams: 3_120 + 2_000,
+          // 2,000 / 5,120 = 39.06%
+          wasteBasisPoints: 3_906,
+        },
+      ]);
       await wasteReport('machine', '2026-10-16', '2026-10-15').expect(400);
       await wasteReport('colour').expect(400);
     });

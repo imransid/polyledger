@@ -440,6 +440,7 @@ model JobCard {
   plannedStartDate DateTime          @map("planned_start_date") @db.Date
   status           JobCardStatus     @default(PLANNED)
   cancelReason     String?           @map("cancel_reason")
+  closedAt         DateTime?         @map("closed_at") @db.Timestamptz(3)
   createdById      String            @map("created_by_id") @db.Uuid
   createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)

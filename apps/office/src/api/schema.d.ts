@@ -1444,6 +1444,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/dashboard/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DashboardController_today"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboard/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DashboardController_orders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboard/stock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DashboardController_stock"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboard/leaks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DashboardController_leaks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboard/gate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DashboardController_gate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4207,6 +4287,8 @@ export interface operations {
                 customerId?: string;
                 deliveryFrom?: string;
                 deliveryTo?: string;
+                /** @description Only orders that still owe the customer something */
+                open?: "true" | "false";
                 late?: "true" | "false";
             };
             header?: never;
@@ -4892,6 +4974,8 @@ export interface operations {
                             /** @enum {string} */
                             status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
                             cancelReason: string | null;
+                            /** Format: date-time */
+                            closedAt: string | null;
                             /** Format: uuid */
                             createdById: string;
                             /** Format: date-time */
@@ -4967,6 +5051,8 @@ export interface operations {
                         /** @enum {string} */
                         status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
                         cancelReason: string | null;
+                        /** Format: date-time */
+                        closedAt: string | null;
                         /** Format: uuid */
                         createdById: string;
                         /** Format: date-time */
@@ -5019,6 +5105,8 @@ export interface operations {
                         /** @enum {string} */
                         status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
                         cancelReason: string | null;
+                        /** Format: date-time */
+                        closedAt: string | null;
                         /** Format: uuid */
                         createdById: string;
                         /** Format: date-time */
@@ -5387,6 +5475,8 @@ export interface operations {
                         /** @enum {string} */
                         status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
                         cancelReason: string | null;
+                        /** Format: date-time */
+                        closedAt: string | null;
                         /** Format: uuid */
                         createdById: string;
                         /** Format: date-time */
@@ -5439,6 +5529,8 @@ export interface operations {
                         /** @enum {string} */
                         status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
                         cancelReason: string | null;
+                        /** Format: date-time */
+                        closedAt: string | null;
                         /** Format: uuid */
                         createdById: string;
                         /** Format: date-time */
@@ -5491,6 +5583,8 @@ export interface operations {
                         /** @enum {string} */
                         status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
                         cancelReason: string | null;
+                        /** Format: date-time */
+                        closedAt: string | null;
                         /** Format: uuid */
                         createdById: string;
                         /** Format: date-time */
@@ -5549,6 +5643,8 @@ export interface operations {
                         /** @enum {string} */
                         status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
                         cancelReason: string | null;
+                        /** Format: date-time */
+                        closedAt: string | null;
                         /** Format: uuid */
                         createdById: string;
                         /** Format: date-time */
@@ -5601,6 +5697,8 @@ export interface operations {
                         /** @enum {string} */
                         status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
                         cancelReason: string | null;
+                        /** Format: date-time */
+                        closedAt: string | null;
                         /** Format: uuid */
                         createdById: string;
                         /** Format: date-time */
@@ -6038,7 +6136,7 @@ export interface operations {
             query: {
                 from: string;
                 to: string;
-                groupBy: "machine" | "mould" | "product" | "shift";
+                groupBy: "machine" | "mould" | "product" | "shift" | "day";
             };
             header?: never;
             path?: never;
@@ -7304,6 +7402,176 @@ export interface operations {
                         phone: string;
                         bin: string | null;
                     };
+                };
+            };
+        };
+    };
+    DashboardController_today: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: date */
+                        day: string;
+                        goodPieces: number;
+                        rejectedPieces: number;
+                        rejectBasisPoints: number | null;
+                        machines: {
+                            running: number;
+                            idle: number;
+                            repair: number;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    DashboardController_orders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: date */
+                        today: string;
+                        /** Format: date */
+                        dueBy: string;
+                        open: {
+                            DRAFT: number;
+                            CONFIRMED: number;
+                            IN_PRODUCTION: number;
+                        };
+                        lateCount: number;
+                        mostLate: {
+                            /** Format: uuid */
+                            id: string;
+                            number: string;
+                            customerCode: string;
+                            /** Format: date */
+                            deliveryDate: string;
+                            daysLate: number;
+                        }[];
+                        dueCount: number;
+                    };
+                };
+            };
+        };
+    };
+    DashboardController_stock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        lowStockCount: number;
+                        finishedGoodsPieces: number;
+                        finishedGoodsStores: {
+                            /** Format: uuid */
+                            locationId: string;
+                            code: string;
+                            name: string;
+                            pieces: number;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    DashboardController_leaks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: date */
+                        from: string;
+                        /** Format: date */
+                        to: string;
+                        closedJobCards: number;
+                        differenceGrams: number;
+                        worstJobCards: {
+                            /** Format: uuid */
+                            jobCardId: string;
+                            number: string;
+                            productCode: string;
+                            issuedGrams: number;
+                            differenceGrams: number;
+                            differenceBasisPoints: number | null;
+                        }[];
+                        wasteByDay: {
+                            /** Format: date */
+                            day: string;
+                            wasteGrams: number;
+                            materialUsedGrams: number;
+                            wasteBasisPoints: number | null;
+                        }[];
+                        shortageGrams: number;
+                        grindingLossGrams: number;
+                    };
+                };
+            };
+        };
+    };
+    DashboardController_gate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        customerCode: string;
+                        vehicleNumber: string;
+                        waitingMinutes: number;
+                        waitedTooLong: boolean;
+                    }[];
                 };
             };
         };

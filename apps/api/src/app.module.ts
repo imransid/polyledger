@@ -5,6 +5,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { AuthModule } from './auth/auth.module.js';
 import { envSchema } from './config/env.js';
 import { CustomersModule } from './customers/customers.module.js';
+import { DashboardModule } from './dashboard/dashboard.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { DispatchModule } from './dispatch/dispatch.module.js';
 import { FormulasModule } from './formulas/formulas.module.js';
@@ -45,6 +46,7 @@ import { SuppliersModule } from './suppliers/suppliers.module.js';
     ScrapModule,
     DispatchModule,
     SettingsModule,
+    DashboardModule,
   ],
   controllers: [HealthController],
   providers: [

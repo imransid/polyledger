@@ -16,14 +16,15 @@ export const WASTE_REPORT_GROUPS = [
   'mould',
   'product',
   'shift',
+  'day',
 ] as const;
 
 export type WasteReportGroup = (typeof WASTE_REPORT_GROUPS)[number];
 
 export interface WasteReportRow {
-  /** The machine, mould or product id, or the shift. */
+  /** The machine, mould or product id, the shift, or the shift date. */
   key: string;
-  /** The machine, mould or product code, or the shift. */
+  /** The machine, mould or product code, the shift, or the shift date. */
   label: string;
   runnerGrams: number;
   rejectGrams: number;
@@ -74,6 +75,7 @@ export class GetWasteReportHandler implements IQueryHandler<GetWasteReportQuery>
       WHEN 'machine' THEN j.machine_id::text
       WHEN 'mould' THEN j.mould_id::text
       WHEN 'product' THEN j.product_id::text
+      WHEN 'day' THEN e.shift_date::text
       ELSE e.shift::text END`;
     const [backflushed, weighed] = await Promise.all([
       this.prisma.$queryRaw<{ key: string; grams: bigint }[]>`
@@ -141,7 +143,7 @@ export class GetWasteReportHandler implements IQueryHandler<GetWasteReportQuery>
     groupBy: WasteReportGroup,
     ids: string[],
   ): Promise<Map<string, string>> {
-    if (groupBy === 'shift') {
+    if (groupBy === 'shift' || groupBy === 'day') {
       return new Map();
     }
     if (groupBy === 'product') {

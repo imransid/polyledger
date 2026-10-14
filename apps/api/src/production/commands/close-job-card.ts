@@ -49,7 +49,9 @@ export class CloseJobCardHandler implements ICommandHandler<CloseJobCardCommand>
             );
           }
 
-          const closed = await moveJobCard(tx, jobCardId, 'close');
+          const closed = await moveJobCard(tx, jobCardId, 'close', {
+            closedAt: new Date(),
+          });
           return { ...closed, summary: await this.reporter.summary(card) };
         },
       ),

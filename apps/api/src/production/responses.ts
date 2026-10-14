@@ -19,6 +19,7 @@ export const jobCardResponse = z.object({
   plannedStartDate: z.iso.date(),
   status: z.enum(JobCardStatus),
   cancelReason: z.string().nullable(),
+  closedAt: z.iso.datetime().nullable(),
   createdById: z.uuid(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
@@ -136,9 +137,9 @@ export const machineBoardResponse = z.array(
 
 export const wasteReportResponse = z.array(
   z.object({
-    /** The machine, mould or product id, or the shift. */
+    /** The machine, mould or product id, the shift, or the shift date. */
     key: z.string(),
-    /** The machine, mould or product code, or the shift. */
+    /** The machine, mould or product code, the shift, or the shift date. */
     label: z.string(),
     runnerGrams: whole,
     rejectGrams: whole,
