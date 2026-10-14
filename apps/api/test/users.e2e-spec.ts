@@ -1,3 +1,5 @@
+import { userResponse } from '../src/auth/responses.js';
+import { pageOf } from '../src/common/list-query.js';
 import type { INestApplication } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import request from 'supertest';
@@ -42,6 +44,7 @@ describe('users', () => {
         role: Role.OPERATOR,
       });
       expect(response.body).not.toHaveProperty('passwordHash');
+      userResponse.strict().parse(response.body);
       await logIn(app, '01712345678');
     });
 
@@ -117,6 +120,7 @@ describe('users', () => {
       .expect(200);
 
     expect(response.body.role).toBe(Role.SUPERVISOR);
+    userResponse.strict().parse(response.body);
   });
 
   it('deactivating blocks login, refresh and existing access tokens', async () => {
@@ -159,6 +163,7 @@ describe('users', () => {
       const page = await list();
 
       expect(page).toMatchObject({ total: 4, page: 1, pageSize: 50 });
+      pageOf(userResponse.strict()).parse(page);
       for (const user of page.items) {
         expect(user).not.toHaveProperty('passwordHash');
       }

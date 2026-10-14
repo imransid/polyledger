@@ -1,5 +1,6 @@
 import { Body, Controller, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { ApiCreatedResponse } from '@nestjs/swagger';
 import { z } from 'zod';
 import {
   type AuthUser,
@@ -14,6 +15,7 @@ import { PostReceiptCommand } from './commands/post-receipt.js';
 import { PostTransferCommand } from './commands/post-transfer.js';
 import { ReverseDocumentCommand } from './commands/reverse-document.js';
 import { stockLinesSchema } from './domain/lines.js';
+import { postedDocumentResponse } from './responses.js';
 import { STOCK_MANAGERS, STORE_STAFF } from './roles.js';
 
 const reasonSchema = z.string().trim().min(1).max(300);
@@ -84,6 +86,7 @@ export class StockPostingsController {
 
   @Roles(...STORE_STAFF)
   @Post('receipts')
+  @ApiCreatedResponse({ standardSchema: postedDocumentResponse })
   postReceipt(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -96,6 +99,7 @@ export class StockPostingsController {
 
   @Roles(...STORE_STAFF)
   @Post('transfers')
+  @ApiCreatedResponse({ standardSchema: postedDocumentResponse })
   postTransfer(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -108,6 +112,7 @@ export class StockPostingsController {
 
   @Roles(...STOCK_MANAGERS)
   @Post('adjustments')
+  @ApiCreatedResponse({ standardSchema: postedDocumentResponse })
   postAdjustment(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -121,6 +126,7 @@ export class StockPostingsController {
 
   @Roles(...STOCK_MANAGERS)
   @Post('openings')
+  @ApiCreatedResponse({ standardSchema: postedDocumentResponse })
   postOpening(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -133,6 +139,7 @@ export class StockPostingsController {
 
   @Roles(...STOCK_MANAGERS)
   @Post('documents/:id/reverse')
+  @ApiCreatedResponse({ standardSchema: postedDocumentResponse })
   reverse(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,

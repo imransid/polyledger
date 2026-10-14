@@ -10,6 +10,8 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { z } from 'zod';
+import { mouldResponse } from './responses.js';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import {
   ALL_ROLES,
   type AuthUser,
@@ -17,7 +19,7 @@ import {
   IdempotencyKey,
   Roles,
 } from '../auth/decorators.js';
-import { found, listQuery } from '../common/list-query.js';
+import { found, listQuery, pageOf } from '../common/list-query.js';
 import {
   codeSchema,
   countSchema,
@@ -64,17 +66,20 @@ export class MouldsController {
   ) {}
 
   @Get()
+  @ApiOkResponse({ standardSchema: pageOf(mouldResponse) })
   list(@Query({ schema: mouldList }) query: z.infer<typeof mouldList>) {
     return this.queryBus.execute(new ListMouldsQuery(query));
   }
 
   @Get(':id')
+  @ApiOkResponse({ standardSchema: mouldResponse })
   async get(@Param('id', ParseUUIDPipe) id: string) {
     return found(await this.queryBus.execute(new GetMouldQuery(id)), 'Mould');
   }
 
   @Roles(...MASTER_DATA_EDITORS)
   @Post()
+  @ApiCreatedResponse({ standardSchema: mouldResponse })
   create(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -87,6 +92,7 @@ export class MouldsController {
 
   @Roles(...MASTER_DATA_EDITORS)
   @Patch(':id')
+  @ApiOkResponse({ standardSchema: mouldResponse })
   update(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,

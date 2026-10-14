@@ -10,6 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { z } from 'zod';
 import {
   type AuthUser,
@@ -17,7 +18,12 @@ import {
   IdempotencyKey,
   Roles,
 } from '../auth/decorators.js';
-import { activeFilter, found, listQuery } from '../common/list-query.js';
+import {
+  activeFilter,
+  found,
+  listQuery,
+  pageOf,
+} from '../common/list-query.js';
 import {
   codeSchema,
   MASTER_DATA_EDITORS,
@@ -29,6 +35,7 @@ import { CreateLocationCommand } from './commands/create-location.js';
 import { UpdateLocationCommand } from './commands/update-location.js';
 import { GetLocationQuery } from './queries/get-location.js';
 import { ListLocationsQuery } from './queries/list-locations.js';
+import { locationResponse } from './responses.js';
 
 const locationBody = z.object({
   code: codeSchema,
@@ -52,11 +59,13 @@ export class LocationsController {
   ) {}
 
   @Get()
+  @ApiOkResponse({ standardSchema: pageOf(locationResponse) })
   list(@Query({ schema: locationList }) query: z.infer<typeof locationList>) {
     return this.queryBus.execute(new ListLocationsQuery(query));
   }
 
   @Get(':id')
+  @ApiOkResponse({ standardSchema: locationResponse })
   async get(@Param('id', ParseUUIDPipe) id: string) {
     return found(
       await this.queryBus.execute(new GetLocationQuery(id)),
@@ -66,6 +75,7 @@ export class LocationsController {
 
   @Roles(...MASTER_DATA_EDITORS)
   @Post()
+  @ApiCreatedResponse({ standardSchema: locationResponse })
   create(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -78,6 +88,7 @@ export class LocationsController {
 
   @Roles(...MASTER_DATA_EDITORS)
   @Patch(':id')
+  @ApiOkResponse({ standardSchema: locationResponse })
   update(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -92,6 +103,7 @@ export class LocationsController {
   @Roles(...MASTER_DATA_EDITORS)
   @Post(':id/deactivate')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: locationResponse })
   deactivate(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -110,6 +122,7 @@ export class LocationsController {
   @Roles(...MASTER_DATA_EDITORS)
   @Post(':id/reactivate')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: locationResponse })
   reactivate(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,

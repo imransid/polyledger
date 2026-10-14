@@ -11,7 +11,7 @@ export const tokensResponse = z.object({
     .describe('Left out with X-Client: office, which gets it as a cookie'),
 });
 
-export const currentUserResponse = z.object({
+export const userResponse = z.object({
   id: z.uuid(),
   name: z.string(),
   email: z.string().nullable(),

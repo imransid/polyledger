@@ -51,3 +51,13 @@ export const dateRangeQuery = z
     message: 'from cannot be after to',
     path: ['to'],
   });
+
+/** The response shape of every paged list, for the OpenAPI spec. */
+export function pageOf<T extends z.ZodType>(item: T) {
+  return z.object({
+    items: z.array(item),
+    total: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
+  });
+}

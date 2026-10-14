@@ -8,6 +8,9 @@ import {
   Post,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { z } from 'zod';
+import { formulaVersionResponse } from './responses.js';
 import {
   type AuthUser,
   CurrentUser,
@@ -34,11 +37,13 @@ export class FormulasController {
   ) {}
 
   @Get('products/:productId/formulas')
+  @ApiOkResponse({ standardSchema: z.array(formulaVersionResponse) })
   list(@Param('productId', ParseUUIDPipe) productId: string) {
     return this.queryBus.execute(new ListFormulaVersionsQuery(productId));
   }
 
   @Get('formulas/:id')
+  @ApiOkResponse({ standardSchema: formulaVersionResponse })
   async get(@Param('id', ParseUUIDPipe) id: string) {
     return found(
       await this.queryBus.execute(new GetFormulaVersionQuery(id)),
@@ -48,6 +53,7 @@ export class FormulasController {
 
   @Roles(...MASTER_DATA_EDITORS)
   @Post('products/:productId/formulas')
+  @ApiCreatedResponse({ standardSchema: formulaVersionResponse })
   create(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -67,6 +73,7 @@ export class FormulasController {
   @Roles(...MASTER_DATA_EDITORS)
   @Post('formulas/:id/activate')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: formulaVersionResponse })
   activate(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,

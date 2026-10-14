@@ -102,14 +102,7 @@ async function postMovements(
   if (movements.length === 0) {
     return [];
   }
-  const balances = await lockBalances(
-    tx,
-    movements.map(({ item, locationId }) => ({
-      itemType: item.type,
-      itemId: item.id,
-      locationId,
-    })),
-  );
+  const balances = await lockBalances(tx, movements);
 
   const rows = movements.map(({ item, locationId, change, reversalOfId }) => {
     const key = keyOf({ itemType: item.type, itemId: item.id, locationId });
@@ -156,14 +149,14 @@ async function postMovements(
 // (a transfer each way, say) wait for each other instead of deadlocking.
 export async function lockBalances(
   tx: Prisma.TransactionClient,
-  keys: BalanceKey[],
+  slots: { item: StockItem; locationId: string }[],
 ): Promise<Map<string, Balance>> {
   const unique = [
     ...new Map(
-      keys.map(({ itemType, itemId, locationId }) => [
-        keyOf({ itemType, itemId, locationId }),
-        { itemType, itemId, locationId },
-      ]),
+      slots.map(({ item, locationId }) => {
+        const key = { itemType: item.type, itemId: item.id, locationId };
+        return [keyOf(key), { ...key, itemCode: item.code }];
+      }),
     ).values(),
   ];
   unique.sort((a, b) => (keyOf(a) < keyOf(b) ? -1 : 1));

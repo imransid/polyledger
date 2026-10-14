@@ -1,5 +1,6 @@
 import createClient, { type Middleware } from 'openapi-fetch';
 import { currentAccessToken, refreshSession } from '@/auth/session';
+import { API_BASE_URL } from './base-url';
 import type { paths } from './schema';
 
 const retries = new Map<string, Request>();
@@ -35,5 +36,5 @@ const bearerToken: Middleware = {
 };
 
 /** Typed from the API's OpenAPI spec; run `pnpm api:client` after API changes. */
-export const api = createClient<paths>({ baseUrl: '/api' });
+export const api = createClient<paths>({ baseUrl: API_BASE_URL });
 api.use(bearerToken);

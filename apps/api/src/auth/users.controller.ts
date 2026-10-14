@@ -10,8 +10,14 @@ import {
   Query,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import {
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger';
+import { userResponse } from './responses.js';
 import { z } from 'zod';
-import { activeFilter, listQuery } from '../common/list-query.js';
+import { activeFilter, listQuery, pageOf } from '../common/list-query.js';
 import { phoneSchema } from '../common/phone.js';
 import { Role } from '../generated/prisma/client.js';
 import { ChangeUserRoleCommand } from './commands/change-user-role.js';
@@ -56,11 +62,13 @@ export class UsersController {
   ) {}
 
   @Get()
+  @ApiOkResponse({ standardSchema: pageOf(userResponse) })
   list(@Query({ schema: userList }) query: z.infer<typeof userList>) {
     return this.queryBus.execute(new ListUsersQuery(query));
   }
 
   @Post()
+  @ApiCreatedResponse({ standardSchema: userResponse })
   create(
     @CurrentUser() owner: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -72,6 +80,7 @@ export class UsersController {
   }
 
   @Patch(':id/role')
+  @ApiOkResponse({ standardSchema: userResponse })
   changeRole(
     @CurrentUser() owner: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -85,6 +94,7 @@ export class UsersController {
 
   @Post(':id/deactivate')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: userResponse })
   deactivate(
     @CurrentUser() owner: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -97,6 +107,7 @@ export class UsersController {
 
   @Post(':id/reactivate')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: userResponse })
   reactivate(
     @CurrentUser() owner: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -109,6 +120,7 @@ export class UsersController {
 
   @Post(':id/reset-password')
   @HttpCode(204)
+  @ApiNoContentResponse()
   async resetPassword(
     @CurrentUser() owner: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,

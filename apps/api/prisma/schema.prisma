@@ -333,6 +333,9 @@ model StockLedgerEntry {
 model StockBalance {
   itemType   StockItemType @map("item_type")
   itemId     String        @map("item_id") @db.Uuid
+  /// A copy of the item's code, which never changes: balances sort and
+  /// search by it without reading other modules' tables.
+  itemCode   String        @map("item_code")
   locationId String        @map("location_id") @db.Uuid
   grams      BigInt        @default(0)
   pieces     BigInt        @default(0)
@@ -340,6 +343,7 @@ model StockBalance {
   location   Location      @relation(fields: [locationId], references: [id])
 
   @@id([itemType, itemId, locationId])
+  @@index([itemType, itemCode])
   @@map("stock_balances")
 }
 

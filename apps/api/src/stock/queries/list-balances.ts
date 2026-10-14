@@ -18,6 +18,7 @@ export interface BalanceFilter extends ListQuery {
 export interface BalanceView {
   itemType: StockItemType;
   itemId: string;
+  itemCode: string;
   locationId: string;
   grams: Grams;
   pieces: number | null;
@@ -38,6 +39,9 @@ export class ListBalancesHandler implements IQueryHandler<ListBalancesQuery> {
       itemType: filter.itemType,
       itemId: filter.itemId,
       locationId: filter.locationId,
+      itemCode: filter.search
+        ? { contains: filter.search, mode: 'insensitive' as const }
+        : undefined,
       NOT: { grams: 0n, pieces: 0n },
     };
     const [rows, total] = await this.prisma.$transaction([
@@ -45,7 +49,7 @@ export class ListBalancesHandler implements IQueryHandler<ListBalancesQuery> {
         where,
         orderBy: [
           { itemType: 'asc' },
-          { itemId: 'asc' },
+          { itemCode: 'asc' },
           { locationId: 'asc' },
         ],
         ...pageArgs(filter),
@@ -55,6 +59,7 @@ export class ListBalancesHandler implements IQueryHandler<ListBalancesQuery> {
     const items = rows.map((row) => ({
       itemType: row.itemType,
       itemId: row.itemId,
+      itemCode: row.itemCode,
       locationId: row.locationId,
       grams: grams(Number(row.grams)),
       pieces: row.itemType === 'PRODUCT' ? toSafeNumber(row.pieces) : null,

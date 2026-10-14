@@ -11,13 +11,20 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { z } from 'zod';
+import { rawMaterialResponse } from './responses.js';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import {
   type AuthUser,
   CurrentUser,
   IdempotencyKey,
   Roles,
 } from '../auth/decorators.js';
-import { activeFilter, found, listQuery } from '../common/list-query.js';
+import {
+  activeFilter,
+  found,
+  listQuery,
+  pageOf,
+} from '../common/list-query.js';
 import {
   codeSchema,
   gramsSchema,
@@ -57,6 +64,7 @@ export class RawMaterialsController {
   ) {}
 
   @Get()
+  @ApiOkResponse({ standardSchema: pageOf(rawMaterialResponse) })
   list(
     @Query({ schema: rawMaterialList }) query: z.infer<typeof rawMaterialList>,
   ) {
@@ -64,6 +72,7 @@ export class RawMaterialsController {
   }
 
   @Get(':id')
+  @ApiOkResponse({ standardSchema: rawMaterialResponse })
   async get(@Param('id', ParseUUIDPipe) id: string) {
     const [material] = await this.queryBus.execute(
       new GetRawMaterialsQuery([id]),
@@ -73,6 +82,7 @@ export class RawMaterialsController {
 
   @Roles(...MASTER_DATA_EDITORS)
   @Post()
+  @ApiCreatedResponse({ standardSchema: rawMaterialResponse })
   create(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -85,6 +95,7 @@ export class RawMaterialsController {
 
   @Roles(...MASTER_DATA_EDITORS)
   @Patch(':id')
+  @ApiOkResponse({ standardSchema: rawMaterialResponse })
   update(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -100,6 +111,7 @@ export class RawMaterialsController {
   @Roles(...MASTER_DATA_EDITORS)
   @Post(':id/deactivate')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: rawMaterialResponse })
   deactivate(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -118,6 +130,7 @@ export class RawMaterialsController {
   @Roles(...MASTER_DATA_EDITORS)
   @Post(':id/reactivate')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: rawMaterialResponse })
   reactivate(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,

@@ -22,6 +22,7 @@ export interface StockCardLine {
   entryId: number;
   postedAt: Date;
   movementType: StockDocumentKind;
+  documentId: string;
   documentNumber: string;
   locationId: string;
   grams: Grams;
@@ -34,6 +35,7 @@ interface CardRow {
   entryId: number;
   postedAt: Date;
   movementType: StockDocumentKind;
+  documentId: string;
   documentNumber: string;
   locationId: string;
   grams: number;
@@ -62,7 +64,8 @@ export class GetStockCardHandler implements IQueryHandler<GetStockCardQuery> {
     const rows = await this.prisma.$queryRaw<CardRow[]>`
       SELECT * FROM (
         SELECT l.id AS "entryId", l.posted_at AS "postedAt",
-               l.movement_type AS "movementType", d.number AS "documentNumber",
+               l.movement_type AS "movementType", d.id AS "documentId",
+               d.number AS "documentNumber",
                l.location_id AS "locationId", l.grams, l.pieces,
                SUM(l.grams::bigint) OVER (ORDER BY l.id) AS "balanceGrams",
                SUM(COALESCE(l.pieces, 0)::bigint) OVER (ORDER BY l.id) AS "balancePieces"

@@ -18,8 +18,9 @@ export default defineConfig([
     languageOptions: { globals: globals.browser },
   },
   {
-    // shadcn components export their variant helpers next to them.
-    files: ['src/components/ui/**'],
+    // shadcn components export their variant helpers next to them; tests
+    // and their helpers are never hot-reloaded.
+    files: ['src/components/ui/**', 'src/test/**', 'src/**/*.test.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
 ]);

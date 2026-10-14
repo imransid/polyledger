@@ -1,12 +1,21 @@
 import { randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import type { z } from 'zod';
 import { ALL_ROLES } from '../src/auth/decorators.js';
+import { pageOf } from '../src/common/list-query.js';
 import {
   MASTER_DATA_EDITORS,
   MASTER_DATA_READERS,
 } from '../src/common/master-data.js';
+import { customerResponse } from '../src/customers/responses.js';
 import { Role } from '../src/generated/prisma/client.js';
+import { machineResponse } from '../src/machines/responses.js';
+import { rawMaterialResponse } from '../src/materials/responses.js';
+import { mouldResponse } from '../src/moulds/responses.js';
+import { productResponse } from '../src/products/responses.js';
+import { locationResponse } from '../src/stock/responses.js';
+import { supplierResponse } from '../src/suppliers/responses.js';
 import { type Api, apiFor, startApp, tokenFor } from './support.js';
 
 let productCount = 0;
@@ -32,6 +41,8 @@ interface Resource {
   fields: (owner: Api) => Promise<Record<string, unknown>>;
   change: Record<string, unknown>;
   retiredBy: 'deactivate' | 'status';
+  /** What the OpenAPI spec promises, for resources the office app shows. */
+  response?: z.ZodObject;
 }
 
 const resources: Resource[] = [
@@ -45,6 +56,7 @@ const resources: Resource[] = [
     }),
     change: { minimumStockGrams: 750_000 },
     retiredBy: 'deactivate',
+    response: rawMaterialResponse,
   },
   {
     path: '/products',
@@ -57,6 +69,7 @@ const resources: Resource[] = [
     }),
     change: { colour: 'Blue' },
     retiredBy: 'deactivate',
+    response: productResponse,
   },
   {
     path: '/moulds',
@@ -69,6 +82,7 @@ const resources: Resource[] = [
     }),
     change: { cycleTimeTenths: 118 },
     retiredBy: 'status',
+    response: mouldResponse,
   },
   {
     path: '/machines',
@@ -76,6 +90,7 @@ const resources: Resource[] = [
     fields: async () => ({ name: 'Haitian MA1600', tonnage: 160 }),
     change: { tonnage: 180 },
     retiredBy: 'status',
+    response: machineResponse,
   },
   {
     path: '/customers',
@@ -87,6 +102,7 @@ const resources: Resource[] = [
     }),
     change: { address: 'Gulshan, Dhaka' },
     retiredBy: 'deactivate',
+    response: customerResponse,
   },
   {
     path: '/locations',
@@ -97,6 +113,7 @@ const resources: Resource[] = [
     }),
     change: { name: 'Store B' },
     retiredBy: 'deactivate',
+    response: locationResponse,
   },
   {
     path: '/suppliers',
@@ -108,6 +125,7 @@ const resources: Resource[] = [
     }),
     change: { address: 'Halishahar, Chattogram' },
     retiredBy: 'deactivate',
+    response: supplierResponse,
   },
 ];
 
@@ -160,6 +178,23 @@ describe.each(resources)('$path', (resource) => {
       created.id,
     );
   });
+
+  it.skipIf(!resource.response)(
+    'answers in the shapes the OpenAPI spec promises',
+    async () => {
+      const shape = resource.response!.strict();
+      const created = await create('AB-01');
+      const item = `${path}/${created.id}`;
+
+      shape.parse(created);
+      shape.parse((await owner.get(item).expect(200)).body);
+      pageOf(shape).parse((await owner.get(path).expect(200)).body);
+      shape.parse(
+        (await owner.patch(item).send(resource.change).expect(200)).body,
+      );
+      shape.parse((await retire(created.id)).body);
+    },
+  );
 
   it('never reuses a code, even after the record is retired', async () => {
     const created = await create('AB-01');

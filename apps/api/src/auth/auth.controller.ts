@@ -32,7 +32,7 @@ import {
 import { passwordSchema } from './domain/password.js';
 import { RefreshCookie } from './infra/refresh-cookie.js';
 import { GetCurrentUserQuery } from './queries/get-current-user.js';
-import { currentUserResponse, tokensResponse } from './responses.js';
+import { userResponse, tokensResponse } from './responses.js';
 
 const loginBody = z.object({
   login: z.string().min(1).max(254),
@@ -114,7 +114,7 @@ export class AuthController {
 
   @Roles(...ALL_ROLES)
   @Get('me')
-  @ApiOkResponse({ standardSchema: currentUserResponse })
+  @ApiOkResponse({ standardSchema: userResponse })
   me(@CurrentUser() user: AuthUser) {
     return this.queryBus.execute(new GetCurrentUserQuery(user.id));
   }

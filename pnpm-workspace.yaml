@@ -13,3 +13,5 @@ allowBuilds:
   ssh2: false
   # Usage analytics ping from swagger-ui-dist (behind @nestjs/swagger).
   '@scarf/scarf': false
+  # Copies the browser worker; the office tests use msw in Node only.
+  msw: false

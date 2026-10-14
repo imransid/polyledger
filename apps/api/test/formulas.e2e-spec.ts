@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { formulaVersionResponse } from '../src/formulas/responses.js';
 import { randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -89,6 +91,11 @@ describe('formulas', () => {
     });
     expect((await versions()).map((v) => v.version)).toEqual([3, 2, 1]);
     expect(await activeVersions()).toEqual([]);
+    // What the OpenAPI spec promises the office client.
+    const shape = formulaVersionResponse.strict();
+    shape.parse(first);
+    z.array(shape).parse(await versions());
+    shape.parse((await activate(first.id).expect(200)).body);
   });
 
   it('activating a version deactivates the previous one', async () => {

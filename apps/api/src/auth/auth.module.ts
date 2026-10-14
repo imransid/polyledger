@@ -21,6 +21,7 @@ import { normalizeLogin } from './domain/login.js';
 import { RefreshCookie } from './infra/refresh-cookie.js';
 import { TokenService } from './infra/tokens.js';
 import { GetCurrentUserHandler } from './queries/get-current-user.js';
+import { GetUserNamesHandler } from './queries/get-user-names.js';
 import { GetUserHandler } from './queries/get-user.js';
 import { ListUsersHandler } from './queries/list-users.js';
 import { UsersController } from './users.controller.js';
@@ -65,6 +66,7 @@ function byIpAndLogin(request: Record<string, any>): string {
     SeedOwnerHandler,
     GetCurrentUserHandler,
     GetUserHandler,
+    GetUserNamesHandler,
     ListUsersHandler,
   ],
 })

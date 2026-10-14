@@ -65,14 +65,7 @@ export class PostOpeningHandler implements ICommandHandler<PostOpeningCommand> {
 
           // Holding the balance locks makes the "only one opening" check safe
           // against a second opening posted at the same moment.
-          await lockBalances(
-            tx,
-            lines.map(({ itemType, itemId }) => ({
-              itemType,
-              itemId,
-              locationId,
-            })),
-          );
+          await lockBalances(tx, movements);
           const existing = await tx.stockLedgerEntry.findFirst({
             where: {
               movementType: 'OPENING',

@@ -10,13 +10,15 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { z } from 'zod';
+import { machineResponse } from './responses.js';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import {
   type AuthUser,
   CurrentUser,
   IdempotencyKey,
   Roles,
 } from '../auth/decorators.js';
-import { found, listQuery } from '../common/list-query.js';
+import { found, listQuery, pageOf } from '../common/list-query.js';
 import {
   codeSchema,
   countSchema,
@@ -55,11 +57,13 @@ export class MachinesController {
   ) {}
 
   @Get()
+  @ApiOkResponse({ standardSchema: pageOf(machineResponse) })
   list(@Query({ schema: machineList }) query: z.infer<typeof machineList>) {
     return this.queryBus.execute(new ListMachinesQuery(query));
   }
 
   @Get(':id')
+  @ApiOkResponse({ standardSchema: machineResponse })
   async get(@Param('id', ParseUUIDPipe) id: string) {
     return found(
       await this.queryBus.execute(new GetMachineQuery(id)),
@@ -69,6 +73,7 @@ export class MachinesController {
 
   @Roles(...MASTER_DATA_EDITORS)
   @Post()
+  @ApiCreatedResponse({ standardSchema: machineResponse })
   create(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -81,6 +86,7 @@ export class MachinesController {
 
   @Roles(...MASTER_DATA_EDITORS)
   @Patch(':id')
+  @ApiOkResponse({ standardSchema: machineResponse })
   update(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,

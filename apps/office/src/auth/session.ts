@@ -1,4 +1,5 @@
 import createClient from 'openapi-fetch';
+import { API_BASE_URL } from '@/api/base-url';
 import { unwrap } from '@/api/errors';
 import type { paths } from '@/api/schema';
 
@@ -11,7 +12,7 @@ export type Session =
 // an httpOnly cookie the page never sees: X-Client: office asks the API to
 // set it, and a reload signs in again through it.
 const sessionApi = createClient<paths>({
-  baseUrl: '/api',
+  baseUrl: API_BASE_URL,
   headers: { 'X-Client': 'office' },
 });
 

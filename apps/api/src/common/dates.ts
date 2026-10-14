@@ -19,3 +19,14 @@ export function toDateString(date: Date): string {
 export function fromDateString(value: string): Date {
   return new Date(`${value}T00:00:00.000Z`);
 }
+
+export function addDays(day: string, days: number): string {
+  const date = fromDateString(day);
+  date.setUTCDate(date.getUTCDate() + days);
+  return toDateString(date);
+}
+
+// The moment a factory day begins. Bangladesh keeps UTC+6 all year.
+export function factoryDayStart(day: string): Date {
+  return new Date(`${day}T00:00:00.000+06:00`);
+}

@@ -11,13 +11,20 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { z } from 'zod';
+import { supplierResponse } from './responses.js';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import {
   type AuthUser,
   CurrentUser,
   IdempotencyKey,
   Roles,
 } from '../auth/decorators.js';
-import { activeFilter, found, listQuery } from '../common/list-query.js';
+import {
+  activeFilter,
+  found,
+  listQuery,
+  pageOf,
+} from '../common/list-query.js';
 import {
   codeSchema,
   MASTER_DATA_EDITORS,
@@ -50,11 +57,13 @@ export class SuppliersController {
   ) {}
 
   @Get()
+  @ApiOkResponse({ standardSchema: pageOf(supplierResponse) })
   list(@Query({ schema: supplierList }) query: z.infer<typeof supplierList>) {
     return this.queryBus.execute(new ListSuppliersQuery(query));
   }
 
   @Get(':id')
+  @ApiOkResponse({ standardSchema: supplierResponse })
   async get(@Param('id', ParseUUIDPipe) id: string) {
     return found(
       await this.queryBus.execute(new GetSupplierQuery(id)),
@@ -64,6 +73,7 @@ export class SuppliersController {
 
   @Roles(...MASTER_DATA_EDITORS)
   @Post()
+  @ApiCreatedResponse({ standardSchema: supplierResponse })
   create(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -76,6 +86,7 @@ export class SuppliersController {
 
   @Roles(...MASTER_DATA_EDITORS)
   @Patch(':id')
+  @ApiOkResponse({ standardSchema: supplierResponse })
   update(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -90,6 +101,7 @@ export class SuppliersController {
   @Roles(...MASTER_DATA_EDITORS)
   @Post(':id/deactivate')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: supplierResponse })
   deactivate(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -108,6 +120,7 @@ export class SuppliersController {
   @Roles(...MASTER_DATA_EDITORS)
   @Post(':id/reactivate')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: supplierResponse })
   reactivate(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,

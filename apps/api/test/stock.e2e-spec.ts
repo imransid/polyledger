@@ -1,8 +1,19 @@
 import type { INestApplication } from '@nestjs/common';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ALL_ROLES } from '../src/auth/decorators.js';
+import { addDays, factoryToday } from '../src/common/dates.js';
+import { pageOf } from '../src/common/list-query.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { Role } from '../src/generated/prisma/client.js';
+import {
+  balanceResponse,
+  documentDetailResponse,
+  documentSummaryResponse,
+  lowStockResponse,
+  postedDocumentResponse,
+  shortagesResponse,
+  stockCardLineResponse,
+} from '../src/stock/responses.js';
 import {
   STOCK_MANAGERS,
   STOCK_READERS,
@@ -572,6 +583,95 @@ describe('stock ledger', () => {
       entries: [{ itemId: resin, locationId: store, grams: 10_000 }],
     });
     expect(events.every((e) => e.publishedAt === null)).toBe(true);
+  });
+
+  describe('what the office screens read', () => {
+    it('pages balances in item code order and finds them by code', async () => {
+      const second = await created('/locations', {
+        code: 'RM-STORE-2',
+        name: 'Second store',
+        kind: 'RAW_MATERIAL_STORE',
+      });
+      // Created out of code order, so their ids are not in code order.
+      const material = (code: string) =>
+        created('/raw-materials', {
+          code,
+          name: code,
+          type: 'RESIN',
+          minimumStockGrams: 0,
+        });
+      const c = await material('RM-C');
+      const a = await material('RM-A');
+      const b = await material('RM-B');
+      await owner
+        .post('/stock/openings')
+        .send({
+          locationId: second,
+          lines: [rm(c, '3'), rm(a, '1'), rm(b, '2')],
+        })
+        .expect(201);
+      const codes = async (query: string) =>
+        (
+          await owner
+            .get(`/stock/balances?locationId=${second}&${query}`)
+            .expect(200)
+        ).body.items.map((balance: { itemCode: string }) => balance.itemCode);
+
+      expect(await codes('pageSize=2&page=1')).toEqual(['RM-A', 'RM-B']);
+      expect(await codes('pageSize=2&page=2')).toEqual(['RM-C']);
+      expect(await codes('search=rm-b')).toEqual(['RM-B']);
+    });
+
+    it('filters documents by factory date and says who posted them and what can be reversed', async () => {
+      const grn = (await receive([[resin, '10', '10']]).expect(201)).body;
+      const moved = (await transfer(store, floor, [rm(resin, '1')]).expect(201))
+        .body;
+      const reversal = (await reverse(moved.id).expect(201)).body;
+      const today = factoryToday();
+      const list = async (query: string) =>
+        (await owner.get(`/stock/documents?${query}`).expect(200)).body;
+
+      const posted = new Map(
+        (await list(`from=${today}&to=${today}`)).items.map(
+          (document: { number: string }) => [document.number, document],
+        ),
+      );
+      expect(posted.get(grn.number)).toMatchObject({
+        postedByName: 'OWNER user',
+        reversible: true,
+      });
+      expect(posted.get(moved.number)).toMatchObject({ reversible: false });
+      expect(posted.get(reversal.number)).toMatchObject({ reversible: false });
+      expect(
+        (await list(`from=${addDays(today, -2)}&to=${addDays(today, -1)}`))
+          .total,
+      ).toBe(0);
+      await owner
+        .get(`/stock/documents?from=${today}&to=${addDays(today, -1)}`)
+        .expect(400);
+    });
+
+    it('answers in the shapes the OpenAPI spec promises', async () => {
+      const grn = (await receive([[resin, '1000', '998.5']]).expect(201)).body;
+      const read = async (path: string) =>
+        (await owner.get(path).expect(200)).body;
+
+      postedDocumentResponse.strict().parse(grn);
+      documentDetailResponse
+        .strict()
+        .parse(await read(`/stock/documents/${grn.id}`));
+      pageOf(documentSummaryResponse.strict()).parse(
+        await read('/stock/documents'),
+      );
+      pageOf(balanceResponse.strict()).parse(await read('/stock/balances'));
+      const card = await read(
+        `/stock/card?itemType=RAW_MATERIAL&itemId=${resin}`,
+      );
+      pageOf(stockCardLineResponse.strict()).parse(card);
+      expect(card.items[0].documentId).toBe(grn.id);
+      lowStockResponse.parse(await read('/stock/low-stock'));
+      shortagesResponse.parse(await read('/stock/receipts/shortages'));
+    });
   });
 
   describe('reports', () => {

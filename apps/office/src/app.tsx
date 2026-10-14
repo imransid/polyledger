@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { lazy, type ReactNode, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import { ApiError } from '@/api/errors';
 import { ChangePasswordPage } from '@/auth/change-password-page';
@@ -10,6 +11,26 @@ import { NAVIGATION } from '@/layout/navigation';
 import { HomePage } from '@/pages/home-page';
 import { NotFoundPage } from '@/pages/not-found-page';
 import { PlaceholderPage } from '@/pages/placeholder-page';
+import { text } from './i18n';
+
+// Each area loads when first opened, so the login page stays small.
+const MasterDataArea = lazy(() =>
+  import('@/master-data/area').then((area) => ({
+    default: area.MasterDataArea,
+  })),
+);
+const StockArea = lazy(() =>
+  import('@/stock/area').then((area) => ({ default: area.StockArea })),
+);
+const UsersArea = lazy(() =>
+  import('@/users/area').then((area) => ({ default: area.UsersArea })),
+);
+
+const AREAS: Record<string, ReactNode> = {
+  '/stock': <StockArea />,
+  '/master-data': <MasterDataArea />,
+  '/users': <UsersArea />,
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,10 +64,16 @@ const router = createBrowserRouter([
           { index: true, element: <HomePage /> },
           { path: 'password', element: <ChangePasswordPage /> },
           ...NAVIGATION.map((item) => ({
-            path: item.path,
+            path: `${item.path}/*`,
             element: (
               <RoleGate roles={item.roles}>
-                <PlaceholderPage title={item.label} />
+                <Suspense
+                  fallback={
+                    <p className="text-muted-foreground">{text.loading}</p>
+                  }
+                >
+                  {AREAS[item.path] ?? <PlaceholderPage title={item.label} />}
+                </Suspense>
               </RoleGate>
             ),
           })),

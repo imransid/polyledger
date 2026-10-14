@@ -1,4 +1,10 @@
-import { Query, QueryHandler, type IQueryHandler } from '@nestjs/cqrs';
+import {
+  Query,
+  QueryBus,
+  QueryHandler,
+  type IQueryHandler,
+} from '@nestjs/cqrs';
+import { addDays, factoryDayStart } from '../../common/dates.js';
 import {
   type ListQuery,
   type Page,
@@ -9,12 +15,18 @@ import type {
   StockDocument,
   StockDocumentKind,
 } from '../../generated/prisma/client.js';
+import { type Described, describe } from '../infra/document-views.js';
 
 export interface StockDocumentFilter extends ListQuery {
   kind?: StockDocumentKind;
+  /** Factory dates the document was posted on, both included. */
+  from?: string;
+  to?: string;
 }
 
-export class ListStockDocumentsQuery extends Query<Page<StockDocument>> {
+export class ListStockDocumentsQuery extends Query<
+  Page<Described<StockDocument>>
+> {
   constructor(readonly filter: StockDocumentFilter) {
     super();
   }
@@ -22,13 +34,20 @@ export class ListStockDocumentsQuery extends Query<Page<StockDocument>> {
 
 @QueryHandler(ListStockDocumentsQuery)
 export class ListStockDocumentsHandler implements IQueryHandler<ListStockDocumentsQuery> {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   async execute({
     filter,
-  }: ListStockDocumentsQuery): Promise<Page<StockDocument>> {
+  }: ListStockDocumentsQuery): Promise<Page<Described<StockDocument>>> {
     const where = {
       kind: filter.kind,
+      postedAt: {
+        gte: filter.from ? factoryDayStart(filter.from) : undefined,
+        lt: filter.to ? factoryDayStart(addDays(filter.to, 1)) : undefined,
+      },
       ...(filter.search && {
         OR: [
           { number: { contains: filter.search, mode: 'insensitive' as const } },
@@ -41,7 +60,7 @@ export class ListStockDocumentsHandler implements IQueryHandler<ListStockDocumen
         ],
       }),
     };
-    const [items, total] = await this.prisma.$transaction([
+    const [documents, total] = await this.prisma.$transaction([
       this.prisma.stockDocument.findMany({
         where,
         orderBy: { postedAt: 'desc' },
@@ -49,6 +68,11 @@ export class ListStockDocumentsHandler implements IQueryHandler<ListStockDocumen
       }),
       this.prisma.stockDocument.count({ where }),
     ]);
-    return { items, total, page: filter.page, pageSize: filter.pageSize };
+    return {
+      items: await describe(this.queryBus, documents),
+      total,
+      page: filter.page,
+      pageSize: filter.pageSize,
+    };
   }
 }

@@ -1,7 +1,7 @@
 import type { INestApplicationContext } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { CreateUserCommand } from '../auth/commands/create-user.js';
-import { factoryToday, fromDateString, toDateString } from '../common/dates.js';
+import { addDays, factoryToday } from '../common/dates.js';
 import { CreateCustomerCommand } from '../customers/commands/create-customer.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { ActivateFormulaVersionCommand } from '../formulas/commands/activate-formula-version.js';
@@ -224,10 +224,4 @@ async function seedOrders(
       );
     }
   }
-}
-
-function addDays(date: string, days: number): string {
-  const day = fromDateString(date);
-  day.setUTCDate(day.getUTCDate() + days);
-  return toDateString(day);
 }

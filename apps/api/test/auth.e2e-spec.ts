@@ -2,7 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PrismaService } from '../src/database/prisma.service.js';
-import { currentUserResponse, tokensResponse } from '../src/auth/responses.js';
+import { userResponse, tokensResponse } from '../src/auth/responses.js';
 import { Role } from '../src/generated/prisma/client.js';
 import { createUser, logIn, PASSWORD, startApp } from './support.js';
 
@@ -36,7 +36,7 @@ describe('auth', () => {
       expect(response.body).not.toHaveProperty('passwordHash');
       // What the OpenAPI spec promises the office client.
       tokensResponse.strict().parse(tokens);
-      currentUserResponse.strict().parse(response.body);
+      userResponse.strict().parse(response.body);
     });
 
     it('accepts both phone formats', async () => {

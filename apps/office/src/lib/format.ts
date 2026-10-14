@@ -1,6 +1,14 @@
-import { formatKilograms, formatPoisha, grams } from '@polyledger/shared';
+import {
+  formatKilograms,
+  formatPoisha,
+  grams,
+  toLocalPhone,
+} from '@polyledger/shared';
+import { formatDecimal } from './decimal';
 
 const FACTORY_TIME_ZONE = 'Asia/Dhaka';
+
+const PIECES = new Intl.NumberFormat('en-IN');
 
 // Factory dates (order dates, shift dates) are calendar days without a time,
 // so they must not shift with any time zone.
@@ -37,4 +45,44 @@ export function formatDay(day: string): string {
 /** A UTC timestamp in Bangladesh time: "15 Oct 2026, 02:30". */
 export function formatMoment(timestamp: string): string {
   return MOMENT.format(new Date(timestamp));
+}
+
+/** A piece or runner weight in milligrams, in grams: "2.5 g". */
+export function formatGrams(milligrams: number): string {
+  return `${formatDecimal(milligrams, 3)} g`;
+}
+
+/** Tenths of a second: "8.5 s". */
+export function formatSeconds(tenths: number): string {
+  return `${formatDecimal(tenths, 1, { keepZeros: true })} s`;
+}
+
+/** Basis points: "97.50%". */
+export function formatPercent(basisPoints: number): string {
+  return `${formatDecimal(basisPoints, 2, { keepZeros: true })}%`;
+}
+
+/** Stored as +8801712345678, shown as people write it: 01712345678. */
+export const formatPhone = toLocalPhone;
+
+/** Whole pieces with lakh grouping: "1,20,000 pcs". */
+export function formatPieces(pieces: number): string {
+  return `${PIECES.format(pieces)} pcs`;
+}
+
+/** A stock quantity in the item's own unit: kg for materials, pieces for products. */
+export function formatQuantity(
+  itemType: 'RAW_MATERIAL' | 'PRODUCT',
+  amount: number,
+): string {
+  return itemType === 'PRODUCT' ? formatPieces(amount) : formatWeight(amount);
+}
+
+/** A movement: "+12.500 kg", "−300 pcs". */
+export function formatChange(
+  itemType: 'RAW_MATERIAL' | 'PRODUCT',
+  amount: number,
+): string {
+  const sign = amount > 0 ? '+' : amount < 0 ? '−' : '';
+  return `${sign}${formatQuantity(itemType, Math.abs(amount))}`;
 }

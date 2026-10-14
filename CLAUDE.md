@@ -48,6 +48,8 @@ Tracks every gram of plastic from raw material to dispatch.
 - Events are written to the outbox table in the same transaction. Never
   publish only to the in-memory EventBus.
 - Tablets create records only. They never edit stock.
+- Item codes never change after creation: stock_balances keeps a copy of
+  each item's code to sort and search by.
 - Store all times in UTC.
 
 ## Architecture
@@ -98,6 +100,10 @@ Write code the way an experienced engineer on a small team would.
 - Weights, money and dates only through src/lib/format.ts: kg with three
   decimals, ৳ with lakh grouping, timestamps in Asia/Dhaka.
 - Show the API's error message to the user (unwrap + ErrorMessage).
+- Every write sends an Idempotency-Key from useWrite. A create form keeps
+  its key until it leaves; a form that stays open renews it after saving.
+- Component tests fake the API with MSW and never reach the network: the
+  server starts in src/test/setup.ts before any module creates the client.
 - /docs (Swagger UI) runs only with NODE_ENV=development.
 
 ## Testing

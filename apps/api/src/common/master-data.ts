@@ -37,3 +37,8 @@ export function throwIfCodeInUse(error: unknown, code: string): void {
     throw new ConflictException(`Code ${code} is already in use`);
   }
 }
+
+export const timestamps = {
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+};
