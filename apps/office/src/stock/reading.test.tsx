@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import type { Role } from '@/api/types';
@@ -68,8 +68,10 @@ describe('documents', () => {
       'RECEIPT',
     );
     await user.type(screen.getByLabelText(words.documents.from), '2026-10-01');
-    expect(asked.at(-1)?.get('kind')).toBe('RECEIPT');
-    expect(asked.at(-1)?.get('from')).toBe('2026-10-01');
+    await waitFor(() => {
+      expect(asked.at(-1)?.get('kind')).toBe('RECEIPT');
+      expect(asked.at(-1)?.get('from')).toBe('2026-10-01');
+    });
     expect(screen.getByText('Rafiqul Islam')).toBeTruthy();
 
     await user.click(screen.getByRole('link', { name: 'GRN-000001' }));
@@ -274,8 +276,10 @@ describe('reports', () => {
       screen.getByLabelText(words.receive.supplier),
       supplier.id,
     );
-    expect(asked.at(-1)?.get('supplierId')).toBe(supplier.id);
-    expect(asked.at(-1)?.get('from')).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    await waitFor(() => {
+      expect(asked.at(-1)?.get('supplierId')).toBe(supplier.id);
+      expect(asked.at(-1)?.get('from')).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
   });
 });
 

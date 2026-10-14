@@ -116,6 +116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/operators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["UsersController_operators"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/{id}/role": {
         parameters: {
             query?: never;
@@ -1188,6 +1204,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/production/machine-board": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ProductionReportsController_machineBoard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/production/waste-report": {
         parameters: {
             query?: never;
@@ -1643,6 +1675,29 @@ export interface operations {
                         /** Format: date-time */
                         updatedAt: string;
                     };
+                };
+            };
+        };
+    };
+    UsersController_operators: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        name: string;
+                    }[];
                 };
             };
         };
@@ -3834,6 +3889,7 @@ export interface operations {
                 page?: number;
                 pageSize?: number;
                 kind?: "RECEIPT" | "TRANSFER" | "ADJUSTMENT" | "OPENING" | "REVERSAL" | "ISSUE" | "PRODUCTION" | "HANDOVER" | "RETURN" | "WASTE" | "GRINDING" | "SCRAP_SALE" | "SCRAP_TRANSFER" | "DISPATCH" | "CUSTOMER_RETURN";
+                jobCardId?: string;
                 from?: string;
                 to?: string;
             };
@@ -4131,7 +4187,49 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            number: string;
+                            /** Format: uuid */
+                            customerId: string;
+                            /** Format: date */
+                            orderDate: string;
+                            /** Format: date */
+                            deliveryDate: string;
+                            customerPo: string | null;
+                            notes: string | null;
+                            /** @enum {string} */
+                            status: "DRAFT" | "CONFIRMED" | "IN_PRODUCTION" | "COMPLETED" | "CANCELLED";
+                            cancelReason: string | null;
+                            overDeliveryBasisPoints: number;
+                            shortCloseReason: string | null;
+                            /** Format: uuid */
+                            createdById: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                            lines: {
+                                /** Format: uuid */
+                                orderId: string;
+                                lineNo: number;
+                                /** Format: uuid */
+                                productId: string;
+                                pieces: number;
+                                unitPricePoisha: number | null;
+                                deliveredPieces: number;
+                                returnedPieces: number;
+                            }[];
+                            late: boolean;
+                        }[];
+                        total: number;
+                        page: number;
+                        pageSize: number;
+                    };
+                };
             };
         };
     };
@@ -4175,7 +4273,44 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        customerId: string;
+                        /** Format: date */
+                        orderDate: string;
+                        /** Format: date */
+                        deliveryDate: string;
+                        customerPo: string | null;
+                        notes: string | null;
+                        /** @enum {string} */
+                        status: "DRAFT" | "CONFIRMED" | "IN_PRODUCTION" | "COMPLETED" | "CANCELLED";
+                        cancelReason: string | null;
+                        overDeliveryBasisPoints: number;
+                        shortCloseReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            orderId: string;
+                            lineNo: number;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                            unitPricePoisha: number | null;
+                            deliveredPieces: number;
+                            returnedPieces: number;
+                        }[];
+                        late: boolean;
+                    };
+                };
             };
         };
     };
@@ -4192,7 +4327,33 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        products: {
+                            /** Format: uuid */
+                            productId: string;
+                            code: string;
+                            orderedPieces: number;
+                            fromStockPieces: number;
+                            toProducePieces: number;
+                            formulaVersion: number | null;
+                        }[];
+                        materials: {
+                            /** Format: uuid */
+                            rawMaterialId: string;
+                            code: string;
+                            name: string;
+                            neededGrams: number;
+                            availableGrams: number;
+                            shortageGrams: number;
+                        }[];
+                        missingFormulas: {
+                            /** Format: uuid */
+                            productId: string;
+                            code: string;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -4211,7 +4372,44 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        customerId: string;
+                        /** Format: date */
+                        orderDate: string;
+                        /** Format: date */
+                        deliveryDate: string;
+                        customerPo: string | null;
+                        notes: string | null;
+                        /** @enum {string} */
+                        status: "DRAFT" | "CONFIRMED" | "IN_PRODUCTION" | "COMPLETED" | "CANCELLED";
+                        cancelReason: string | null;
+                        overDeliveryBasisPoints: number;
+                        shortCloseReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            orderId: string;
+                            lineNo: number;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                            unitPricePoisha: number | null;
+                            deliveredPieces: number;
+                            returnedPieces: number;
+                        }[];
+                        late: boolean;
+                    };
+                };
             };
         };
     };
@@ -4252,7 +4450,44 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        customerId: string;
+                        /** Format: date */
+                        orderDate: string;
+                        /** Format: date */
+                        deliveryDate: string;
+                        customerPo: string | null;
+                        notes: string | null;
+                        /** @enum {string} */
+                        status: "DRAFT" | "CONFIRMED" | "IN_PRODUCTION" | "COMPLETED" | "CANCELLED";
+                        cancelReason: string | null;
+                        overDeliveryBasisPoints: number;
+                        shortCloseReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            orderId: string;
+                            lineNo: number;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                            unitPricePoisha: number | null;
+                            deliveredPieces: number;
+                            returnedPieces: number;
+                        }[];
+                        late: boolean;
+                    };
+                };
             };
         };
     };
@@ -4271,7 +4506,27 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        orderId: string;
+                        number: string;
+                        /** @enum {string} */
+                        status: "DRAFT" | "CONFIRMED" | "IN_PRODUCTION" | "COMPLETED" | "CANCELLED";
+                        overDeliveryBasisPoints: number;
+                        shortCloseReason: string | null;
+                        lines: {
+                            lineNo: number;
+                            /** Format: uuid */
+                            productId: string;
+                            code: string;
+                            orderedPieces: number;
+                            deliveredPieces: number;
+                            returnedPieces: number;
+                            remainingPieces: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -4290,7 +4545,31 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        orderId: string;
+                        number: string;
+                        products: {
+                            /** Format: uuid */
+                            productId: string;
+                            code: string;
+                            orderedPieces: number;
+                            fromStockPieces: number;
+                            toProducePieces: number;
+                            formulaVersion: number | null;
+                        }[];
+                        materials: {
+                            /** Format: uuid */
+                            rawMaterialId: string;
+                            code: string;
+                            name: string;
+                            neededGrams: number;
+                            availableGrams: number;
+                            shortageGrams: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -4309,7 +4588,44 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        customerId: string;
+                        /** Format: date */
+                        orderDate: string;
+                        /** Format: date */
+                        deliveryDate: string;
+                        customerPo: string | null;
+                        notes: string | null;
+                        /** @enum {string} */
+                        status: "DRAFT" | "CONFIRMED" | "IN_PRODUCTION" | "COMPLETED" | "CANCELLED";
+                        cancelReason: string | null;
+                        overDeliveryBasisPoints: number;
+                        shortCloseReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            orderId: string;
+                            lineNo: number;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                            unitPricePoisha: number | null;
+                            deliveredPieces: number;
+                            returnedPieces: number;
+                        }[];
+                        late: boolean;
+                    };
+                };
             };
         };
     };
@@ -4328,7 +4644,44 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        customerId: string;
+                        /** Format: date */
+                        orderDate: string;
+                        /** Format: date */
+                        deliveryDate: string;
+                        customerPo: string | null;
+                        notes: string | null;
+                        /** @enum {string} */
+                        status: "DRAFT" | "CONFIRMED" | "IN_PRODUCTION" | "COMPLETED" | "CANCELLED";
+                        cancelReason: string | null;
+                        overDeliveryBasisPoints: number;
+                        shortCloseReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            orderId: string;
+                            lineNo: number;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                            unitPricePoisha: number | null;
+                            deliveredPieces: number;
+                            returnedPieces: number;
+                        }[];
+                        late: boolean;
+                    };
+                };
             };
         };
     };
@@ -4353,7 +4706,44 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        customerId: string;
+                        /** Format: date */
+                        orderDate: string;
+                        /** Format: date */
+                        deliveryDate: string;
+                        customerPo: string | null;
+                        notes: string | null;
+                        /** @enum {string} */
+                        status: "DRAFT" | "CONFIRMED" | "IN_PRODUCTION" | "COMPLETED" | "CANCELLED";
+                        cancelReason: string | null;
+                        overDeliveryBasisPoints: number;
+                        shortCloseReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            orderId: string;
+                            lineNo: number;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                            unitPricePoisha: number | null;
+                            deliveredPieces: number;
+                            returnedPieces: number;
+                        }[];
+                        late: boolean;
+                    };
+                };
             };
         };
     };
@@ -4378,7 +4768,44 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        customerId: string;
+                        /** Format: date */
+                        orderDate: string;
+                        /** Format: date */
+                        deliveryDate: string;
+                        customerPo: string | null;
+                        notes: string | null;
+                        /** @enum {string} */
+                        status: "DRAFT" | "CONFIRMED" | "IN_PRODUCTION" | "COMPLETED" | "CANCELLED";
+                        cancelReason: string | null;
+                        overDeliveryBasisPoints: number;
+                        shortCloseReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            orderId: string;
+                            lineNo: number;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                            unitPricePoisha: number | null;
+                            deliveredPieces: number;
+                            returnedPieces: number;
+                        }[];
+                        late: boolean;
+                    };
+                };
             };
         };
     };
@@ -4392,6 +4819,8 @@ export interface operations {
                 machineId?: string;
                 productId?: string;
                 salesOrderId?: string;
+                plannedFrom?: string;
+                plannedTo?: string;
             };
             header?: never;
             path?: never;
@@ -4403,7 +4832,45 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            number: string;
+                            /** Format: uuid */
+                            productId: string;
+                            /** Format: uuid */
+                            mouldId: string;
+                            /** Format: uuid */
+                            machineId: string;
+                            /** Format: uuid */
+                            floorLocationId: string;
+                            /** Format: uuid */
+                            salesOrderId: string | null;
+                            /** Format: uuid */
+                            formulaVersionId: string;
+                            pieceWeightMg: number;
+                            cavities: number;
+                            runnerWeightMg: number;
+                            plannedPieces: number;
+                            /** Format: date */
+                            plannedStartDate: string;
+                            /** @enum {string} */
+                            status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
+                            cancelReason: string | null;
+                            /** Format: uuid */
+                            createdById: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            updatedAt: string;
+                        }[];
+                        total: number;
+                        page: number;
+                        pageSize: number;
+                    };
+                };
             };
         };
     };
@@ -4441,7 +4908,40 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        productId: string;
+                        /** Format: uuid */
+                        mouldId: string;
+                        /** Format: uuid */
+                        machineId: string;
+                        /** Format: uuid */
+                        floorLocationId: string;
+                        /** Format: uuid */
+                        salesOrderId: string | null;
+                        /** Format: uuid */
+                        formulaVersionId: string;
+                        pieceWeightMg: number;
+                        cavities: number;
+                        runnerWeightMg: number;
+                        plannedPieces: number;
+                        /** Format: date */
+                        plannedStartDate: string;
+                        /** @enum {string} */
+                        status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
+                        cancelReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
             };
         };
     };
@@ -4460,7 +4960,40 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        productId: string;
+                        /** Format: uuid */
+                        mouldId: string;
+                        /** Format: uuid */
+                        machineId: string;
+                        /** Format: uuid */
+                        floorLocationId: string;
+                        /** Format: uuid */
+                        salesOrderId: string | null;
+                        /** Format: uuid */
+                        formulaVersionId: string;
+                        pieceWeightMg: number;
+                        cavities: number;
+                        runnerWeightMg: number;
+                        plannedPieces: number;
+                        /** Format: date */
+                        plannedStartDate: string;
+                        /** @enum {string} */
+                        status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
+                        cancelReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
             };
         };
     };
@@ -4479,7 +5012,32 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        plannedPieces: number;
+                        goodPieces: number;
+                        rejectedPieces: number;
+                        piecesOnFloor: number;
+                        rejectBasisPoints: number;
+                        materials: {
+                            /** Format: uuid */
+                            rawMaterialId: string;
+                            code: string;
+                            name: string;
+                            issuedGrams: number;
+                            usedForPiecesGrams: number;
+                            usedForRunnersGrams: number;
+                            usedForPurgeAndSweepingsGrams: number;
+                            returnedGrams: number;
+                            differenceGrams: number;
+                        }[];
+                        waste: {
+                            expectedRejectAndRunnerGrams: number;
+                            weighedRejectAndRunnerGrams: number;
+                            differenceGrams: number;
+                        };
+                    };
+                };
             };
         };
     };
@@ -4498,7 +5056,17 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        rawMaterialId: string;
+                        code: string;
+                        name: string;
+                        requiredGrams: number;
+                        issuedGrams: number;
+                        suggestedGrams: number;
+                    }[];
+                };
             };
         };
     };
@@ -4517,7 +5085,41 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        jobCardId: string;
+                        /** Format: date */
+                        shiftDate: string;
+                        /** @enum {string} */
+                        shift: "A" | "B" | "C";
+                        /** Format: uuid */
+                        operatorId: string;
+                        shotStart: number;
+                        shotEnd: number;
+                        goodPieces: number;
+                        rejectedPieces: number;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        materials: {
+                            /** Format: uuid */
+                            entryId: string;
+                            /** Format: uuid */
+                            rawMaterialId: string;
+                            pieceGrams: number;
+                            runnerGrams: number;
+                        }[];
+                        warnings: string[];
+                    }[];
+                };
             };
         };
     };
@@ -4554,7 +5156,41 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        jobCardId: string;
+                        /** Format: date */
+                        shiftDate: string;
+                        /** @enum {string} */
+                        shift: "A" | "B" | "C";
+                        /** Format: uuid */
+                        operatorId: string;
+                        shotStart: number;
+                        shotEnd: number;
+                        goodPieces: number;
+                        rejectedPieces: number;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        materials: {
+                            /** Format: uuid */
+                            entryId: string;
+                            /** Format: uuid */
+                            rawMaterialId: string;
+                            pieceGrams: number;
+                            runnerGrams: number;
+                        }[];
+                        warnings: string[];
+                    };
+                };
             };
         };
     };
@@ -4573,7 +5209,37 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        jobCardId: string;
+                        /** Format: date */
+                        shiftDate: string;
+                        /** @enum {string} */
+                        shift: "A" | "B" | "C";
+                        /** Format: uuid */
+                        wasteMaterialId: string;
+                        /** Format: uuid */
+                        scrapLocationId: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            entryId: string;
+                            /** @enum {string} */
+                            wasteType: "RUNNER" | "REJECT" | "PURGE" | "SWEEPINGS";
+                            grams: number;
+                        }[];
+                    }[];
+                };
             };
         };
     };
@@ -4613,7 +5279,37 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        jobCardId: string;
+                        /** Format: date */
+                        shiftDate: string;
+                        /** @enum {string} */
+                        shift: "A" | "B" | "C";
+                        /** Format: uuid */
+                        wasteMaterialId: string;
+                        /** Format: uuid */
+                        scrapLocationId: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            entryId: string;
+                            /** @enum {string} */
+                            wasteType: "RUNNER" | "REJECT" | "PURGE" | "SWEEPINGS";
+                            grams: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -4632,7 +5328,40 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        productId: string;
+                        /** Format: uuid */
+                        mouldId: string;
+                        /** Format: uuid */
+                        machineId: string;
+                        /** Format: uuid */
+                        floorLocationId: string;
+                        /** Format: uuid */
+                        salesOrderId: string | null;
+                        /** Format: uuid */
+                        formulaVersionId: string;
+                        pieceWeightMg: number;
+                        cavities: number;
+                        runnerWeightMg: number;
+                        plannedPieces: number;
+                        /** Format: date */
+                        plannedStartDate: string;
+                        /** @enum {string} */
+                        status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
+                        cancelReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
             };
         };
     };
@@ -4651,7 +5380,40 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        productId: string;
+                        /** Format: uuid */
+                        mouldId: string;
+                        /** Format: uuid */
+                        machineId: string;
+                        /** Format: uuid */
+                        floorLocationId: string;
+                        /** Format: uuid */
+                        salesOrderId: string | null;
+                        /** Format: uuid */
+                        formulaVersionId: string;
+                        pieceWeightMg: number;
+                        cavities: number;
+                        runnerWeightMg: number;
+                        plannedPieces: number;
+                        /** Format: date */
+                        plannedStartDate: string;
+                        /** @enum {string} */
+                        status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
+                        cancelReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
             };
         };
     };
@@ -4670,7 +5432,40 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        productId: string;
+                        /** Format: uuid */
+                        mouldId: string;
+                        /** Format: uuid */
+                        machineId: string;
+                        /** Format: uuid */
+                        floorLocationId: string;
+                        /** Format: uuid */
+                        salesOrderId: string | null;
+                        /** Format: uuid */
+                        formulaVersionId: string;
+                        pieceWeightMg: number;
+                        cavities: number;
+                        runnerWeightMg: number;
+                        plannedPieces: number;
+                        /** Format: date */
+                        plannedStartDate: string;
+                        /** @enum {string} */
+                        status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
+                        cancelReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
             };
         };
     };
@@ -4695,7 +5490,40 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        productId: string;
+                        /** Format: uuid */
+                        mouldId: string;
+                        /** Format: uuid */
+                        machineId: string;
+                        /** Format: uuid */
+                        floorLocationId: string;
+                        /** Format: uuid */
+                        salesOrderId: string | null;
+                        /** Format: uuid */
+                        formulaVersionId: string;
+                        pieceWeightMg: number;
+                        cavities: number;
+                        runnerWeightMg: number;
+                        plannedPieces: number;
+                        /** Format: date */
+                        plannedStartDate: string;
+                        /** @enum {string} */
+                        status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
+                        cancelReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                    };
+                };
             };
         };
     };
@@ -4714,7 +5542,64 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        productId: string;
+                        /** Format: uuid */
+                        mouldId: string;
+                        /** Format: uuid */
+                        machineId: string;
+                        /** Format: uuid */
+                        floorLocationId: string;
+                        /** Format: uuid */
+                        salesOrderId: string | null;
+                        /** Format: uuid */
+                        formulaVersionId: string;
+                        pieceWeightMg: number;
+                        cavities: number;
+                        runnerWeightMg: number;
+                        plannedPieces: number;
+                        /** Format: date */
+                        plannedStartDate: string;
+                        /** @enum {string} */
+                        status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
+                        cancelReason: string | null;
+                        /** Format: uuid */
+                        createdById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        /** Format: date-time */
+                        updatedAt: string;
+                        summary: {
+                            plannedPieces: number;
+                            goodPieces: number;
+                            rejectedPieces: number;
+                            piecesOnFloor: number;
+                            rejectBasisPoints: number;
+                            materials: {
+                                /** Format: uuid */
+                                rawMaterialId: string;
+                                code: string;
+                                name: string;
+                                issuedGrams: number;
+                                usedForPiecesGrams: number;
+                                usedForRunnersGrams: number;
+                                usedForPurgeAndSweepingsGrams: number;
+                                returnedGrams: number;
+                                differenceGrams: number;
+                            }[];
+                            waste: {
+                                expectedRejectAndRunnerGrams: number;
+                                weighedRejectAndRunnerGrams: number;
+                                differenceGrams: number;
+                            };
+                        };
+                    };
+                };
             };
         };
     };
@@ -4745,7 +5630,59 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** @enum {string} */
+                        kind: "RECEIPT" | "TRANSFER" | "ADJUSTMENT" | "OPENING" | "REVERSAL" | "ISSUE" | "PRODUCTION" | "HANDOVER" | "RETURN" | "WASTE" | "GRINDING" | "SCRAP_SALE" | "SCRAP_TRANSFER" | "DISPATCH" | "CUSTOMER_RETURN";
+                        /** Format: uuid */
+                        supplierId: string | null;
+                        supplierReference: string | null;
+                        /** Format: date-time */
+                        receivedOn: string | null;
+                        reason: string | null;
+                        /** Format: uuid */
+                        reversesId: string | null;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        jobCardId: string | null;
+                        /** Format: uuid */
+                        postedById: string;
+                        /** Format: date-time */
+                        postedAt: string;
+                        entries: {
+                            id: number;
+                            /** Format: uuid */
+                            documentId: string;
+                            /** @enum {string} */
+                            itemType: "RAW_MATERIAL" | "PRODUCT";
+                            /** Format: uuid */
+                            itemId: string;
+                            /** Format: uuid */
+                            locationId: string;
+                            /** @enum {string} */
+                            movementType: "RECEIPT" | "TRANSFER" | "ADJUSTMENT" | "OPENING" | "REVERSAL" | "ISSUE" | "PRODUCTION" | "HANDOVER" | "RETURN" | "WASTE" | "GRINDING" | "SCRAP_SALE" | "SCRAP_TRANSFER" | "DISPATCH" | "CUSTOMER_RETURN";
+                            grams: number;
+                            pieces: number | null;
+                            reversalOfId: number | null;
+                            /** Format: uuid */
+                            postedById: string;
+                            /** Format: date-time */
+                            postedAt: string;
+                        }[];
+                        receiptLines: {
+                            /** Format: uuid */
+                            documentId: string;
+                            /** Format: uuid */
+                            rawMaterialId: string;
+                            challanGrams: number;
+                            receivedGrams: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -4772,7 +5709,59 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** @enum {string} */
+                        kind: "RECEIPT" | "TRANSFER" | "ADJUSTMENT" | "OPENING" | "REVERSAL" | "ISSUE" | "PRODUCTION" | "HANDOVER" | "RETURN" | "WASTE" | "GRINDING" | "SCRAP_SALE" | "SCRAP_TRANSFER" | "DISPATCH" | "CUSTOMER_RETURN";
+                        /** Format: uuid */
+                        supplierId: string | null;
+                        supplierReference: string | null;
+                        /** Format: date-time */
+                        receivedOn: string | null;
+                        reason: string | null;
+                        /** Format: uuid */
+                        reversesId: string | null;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        jobCardId: string | null;
+                        /** Format: uuid */
+                        postedById: string;
+                        /** Format: date-time */
+                        postedAt: string;
+                        entries: {
+                            id: number;
+                            /** Format: uuid */
+                            documentId: string;
+                            /** @enum {string} */
+                            itemType: "RAW_MATERIAL" | "PRODUCT";
+                            /** Format: uuid */
+                            itemId: string;
+                            /** Format: uuid */
+                            locationId: string;
+                            /** @enum {string} */
+                            movementType: "RECEIPT" | "TRANSFER" | "ADJUSTMENT" | "OPENING" | "REVERSAL" | "ISSUE" | "PRODUCTION" | "HANDOVER" | "RETURN" | "WASTE" | "GRINDING" | "SCRAP_SALE" | "SCRAP_TRANSFER" | "DISPATCH" | "CUSTOMER_RETURN";
+                            grams: number;
+                            pieces: number | null;
+                            reversalOfId: number | null;
+                            /** Format: uuid */
+                            postedById: string;
+                            /** Format: date-time */
+                            postedAt: string;
+                        }[];
+                        receiptLines: {
+                            /** Format: uuid */
+                            documentId: string;
+                            /** Format: uuid */
+                            rawMaterialId: string;
+                            challanGrams: number;
+                            receivedGrams: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -4803,7 +5792,59 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** @enum {string} */
+                        kind: "RECEIPT" | "TRANSFER" | "ADJUSTMENT" | "OPENING" | "REVERSAL" | "ISSUE" | "PRODUCTION" | "HANDOVER" | "RETURN" | "WASTE" | "GRINDING" | "SCRAP_SALE" | "SCRAP_TRANSFER" | "DISPATCH" | "CUSTOMER_RETURN";
+                        /** Format: uuid */
+                        supplierId: string | null;
+                        supplierReference: string | null;
+                        /** Format: date-time */
+                        receivedOn: string | null;
+                        reason: string | null;
+                        /** Format: uuid */
+                        reversesId: string | null;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        jobCardId: string | null;
+                        /** Format: uuid */
+                        postedById: string;
+                        /** Format: date-time */
+                        postedAt: string;
+                        entries: {
+                            id: number;
+                            /** Format: uuid */
+                            documentId: string;
+                            /** @enum {string} */
+                            itemType: "RAW_MATERIAL" | "PRODUCT";
+                            /** Format: uuid */
+                            itemId: string;
+                            /** Format: uuid */
+                            locationId: string;
+                            /** @enum {string} */
+                            movementType: "RECEIPT" | "TRANSFER" | "ADJUSTMENT" | "OPENING" | "REVERSAL" | "ISSUE" | "PRODUCTION" | "HANDOVER" | "RETURN" | "WASTE" | "GRINDING" | "SCRAP_SALE" | "SCRAP_TRANSFER" | "DISPATCH" | "CUSTOMER_RETURN";
+                            grams: number;
+                            pieces: number | null;
+                            reversalOfId: number | null;
+                            /** Format: uuid */
+                            postedById: string;
+                            /** Format: date-time */
+                            postedAt: string;
+                        }[];
+                        receiptLines: {
+                            /** Format: uuid */
+                            documentId: string;
+                            /** Format: uuid */
+                            rawMaterialId: string;
+                            challanGrams: number;
+                            receivedGrams: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -4829,7 +5870,40 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        jobCardId: string;
+                        /** Format: date */
+                        shiftDate: string;
+                        /** @enum {string} */
+                        shift: "A" | "B" | "C";
+                        /** Format: uuid */
+                        operatorId: string;
+                        shotStart: number;
+                        shotEnd: number;
+                        goodPieces: number;
+                        rejectedPieces: number;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        materials: {
+                            /** Format: uuid */
+                            entryId: string;
+                            /** Format: uuid */
+                            rawMaterialId: string;
+                            pieceGrams: number;
+                            runnerGrams: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -4855,7 +5929,74 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        jobCardId: string;
+                        /** Format: date */
+                        shiftDate: string;
+                        /** @enum {string} */
+                        shift: "A" | "B" | "C";
+                        /** Format: uuid */
+                        wasteMaterialId: string;
+                        /** Format: uuid */
+                        scrapLocationId: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            entryId: string;
+                            /** @enum {string} */
+                            wasteType: "RUNNER" | "REJECT" | "PURGE" | "SWEEPINGS";
+                            grams: number;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    ProductionReportsController_machineBoard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        machineId: string;
+                        code: string;
+                        name: string;
+                        /** @enum {string} */
+                        state: "RUNNING" | "IDLE" | "REPAIR";
+                        jobCard: {
+                            /** Format: uuid */
+                            id: string;
+                            number: string;
+                            /** Format: uuid */
+                            productId: string;
+                            productCode: string;
+                        } | null;
+                        goodPiecesToday: number;
+                        rejectedPiecesToday: number;
+                        rejectBasisPointsToday: number | null;
+                    }[];
+                };
             };
         };
     };
@@ -5105,7 +6246,78 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: uuid */
+                        orderId: string;
+                        /** Format: uuid */
+                        customerId: string;
+                        /** Format: uuid */
+                        fromLocationId: string;
+                        vehicleNumber: string;
+                        driverName: string;
+                        driverPhone: string;
+                        deliveryAddress: string;
+                        notes: string | null;
+                        /** Format: date */
+                        dispatchedOn: string;
+                        /** @enum {string} */
+                        gatePassStatus: "PENDING" | "PASSED";
+                        /** Format: date-time */
+                        gatePassedAt: string | null;
+                        /** Format: uuid */
+                        gatePassedById: string | null;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            challanId: string;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                            returnedPieces: number;
+                        }[];
+                        returns: {
+                            /** Format: uuid */
+                            id: string;
+                            number: string;
+                            /** Format: uuid */
+                            stockDocumentId: string;
+                            /** Format: uuid */
+                            challanId: string;
+                            /** Format: uuid */
+                            toLocationId: string;
+                            /** @enum {string} */
+                            reason: "DAMAGED" | "WRONG_ITEM" | "QUALITY";
+                            /** @enum {string} */
+                            settlement: "REPLACE" | "CREDIT";
+                            /** Format: date */
+                            returnedOn: string;
+                            /** Format: date-time */
+                            reversedAt: string | null;
+                            /** Format: uuid */
+                            recordedById: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            lines: {
+                                /** Format: uuid */
+                                returnId: string;
+                                /** Format: uuid */
+                                productId: string;
+                                pieces: number;
+                            }[];
+                        }[];
+                    }[];
+                };
             };
         };
     };
@@ -5146,7 +6358,78 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: uuid */
+                        orderId: string;
+                        /** Format: uuid */
+                        customerId: string;
+                        /** Format: uuid */
+                        fromLocationId: string;
+                        vehicleNumber: string;
+                        driverName: string;
+                        driverPhone: string;
+                        deliveryAddress: string;
+                        notes: string | null;
+                        /** Format: date */
+                        dispatchedOn: string;
+                        /** @enum {string} */
+                        gatePassStatus: "PENDING" | "PASSED";
+                        /** Format: date-time */
+                        gatePassedAt: string | null;
+                        /** Format: uuid */
+                        gatePassedById: string | null;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            challanId: string;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                            returnedPieces: number;
+                        }[];
+                        returns: {
+                            /** Format: uuid */
+                            id: string;
+                            number: string;
+                            /** Format: uuid */
+                            stockDocumentId: string;
+                            /** Format: uuid */
+                            challanId: string;
+                            /** Format: uuid */
+                            toLocationId: string;
+                            /** @enum {string} */
+                            reason: "DAMAGED" | "WRONG_ITEM" | "QUALITY";
+                            /** @enum {string} */
+                            settlement: "REPLACE" | "CREDIT";
+                            /** Format: date */
+                            returnedOn: string;
+                            /** Format: date-time */
+                            reversedAt: string | null;
+                            /** Format: uuid */
+                            recordedById: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            lines: {
+                                /** Format: uuid */
+                                returnId: string;
+                                /** Format: uuid */
+                                productId: string;
+                                pieces: number;
+                            }[];
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -5163,7 +6446,78 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: uuid */
+                        orderId: string;
+                        /** Format: uuid */
+                        customerId: string;
+                        /** Format: uuid */
+                        fromLocationId: string;
+                        vehicleNumber: string;
+                        driverName: string;
+                        driverPhone: string;
+                        deliveryAddress: string;
+                        notes: string | null;
+                        /** Format: date */
+                        dispatchedOn: string;
+                        /** @enum {string} */
+                        gatePassStatus: "PENDING" | "PASSED";
+                        /** Format: date-time */
+                        gatePassedAt: string | null;
+                        /** Format: uuid */
+                        gatePassedById: string | null;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            challanId: string;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                            returnedPieces: number;
+                        }[];
+                        returns: {
+                            /** Format: uuid */
+                            id: string;
+                            number: string;
+                            /** Format: uuid */
+                            stockDocumentId: string;
+                            /** Format: uuid */
+                            challanId: string;
+                            /** Format: uuid */
+                            toLocationId: string;
+                            /** @enum {string} */
+                            reason: "DAMAGED" | "WRONG_ITEM" | "QUALITY";
+                            /** @enum {string} */
+                            settlement: "REPLACE" | "CREDIT";
+                            /** Format: date */
+                            returnedOn: string;
+                            /** Format: date-time */
+                            reversedAt: string | null;
+                            /** Format: uuid */
+                            recordedById: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            lines: {
+                                /** Format: uuid */
+                                returnId: string;
+                                /** Format: uuid */
+                                productId: string;
+                                pieces: number;
+                            }[];
+                        }[];
+                    }[];
+                };
             };
         };
     };
@@ -5182,7 +6536,78 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: uuid */
+                        orderId: string;
+                        /** Format: uuid */
+                        customerId: string;
+                        /** Format: uuid */
+                        fromLocationId: string;
+                        vehicleNumber: string;
+                        driverName: string;
+                        driverPhone: string;
+                        deliveryAddress: string;
+                        notes: string | null;
+                        /** Format: date */
+                        dispatchedOn: string;
+                        /** @enum {string} */
+                        gatePassStatus: "PENDING" | "PASSED";
+                        /** Format: date-time */
+                        gatePassedAt: string | null;
+                        /** Format: uuid */
+                        gatePassedById: string | null;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            challanId: string;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                            returnedPieces: number;
+                        }[];
+                        returns: {
+                            /** Format: uuid */
+                            id: string;
+                            number: string;
+                            /** Format: uuid */
+                            stockDocumentId: string;
+                            /** Format: uuid */
+                            challanId: string;
+                            /** Format: uuid */
+                            toLocationId: string;
+                            /** @enum {string} */
+                            reason: "DAMAGED" | "WRONG_ITEM" | "QUALITY";
+                            /** @enum {string} */
+                            settlement: "REPLACE" | "CREDIT";
+                            /** Format: date */
+                            returnedOn: string;
+                            /** Format: date-time */
+                            reversedAt: string | null;
+                            /** Format: uuid */
+                            recordedById: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            lines: {
+                                /** Format: uuid */
+                                returnId: string;
+                                /** Format: uuid */
+                                productId: string;
+                                pieces: number;
+                            }[];
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -5207,7 +6632,78 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: uuid */
+                        orderId: string;
+                        /** Format: uuid */
+                        customerId: string;
+                        /** Format: uuid */
+                        fromLocationId: string;
+                        vehicleNumber: string;
+                        driverName: string;
+                        driverPhone: string;
+                        deliveryAddress: string;
+                        notes: string | null;
+                        /** Format: date */
+                        dispatchedOn: string;
+                        /** @enum {string} */
+                        gatePassStatus: "PENDING" | "PASSED";
+                        /** Format: date-time */
+                        gatePassedAt: string | null;
+                        /** Format: uuid */
+                        gatePassedById: string | null;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            challanId: string;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                            returnedPieces: number;
+                        }[];
+                        returns: {
+                            /** Format: uuid */
+                            id: string;
+                            number: string;
+                            /** Format: uuid */
+                            stockDocumentId: string;
+                            /** Format: uuid */
+                            challanId: string;
+                            /** Format: uuid */
+                            toLocationId: string;
+                            /** @enum {string} */
+                            reason: "DAMAGED" | "WRONG_ITEM" | "QUALITY";
+                            /** @enum {string} */
+                            settlement: "REPLACE" | "CREDIT";
+                            /** Format: date */
+                            returnedOn: string;
+                            /** Format: date-time */
+                            reversedAt: string | null;
+                            /** Format: uuid */
+                            recordedById: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            lines: {
+                                /** Format: uuid */
+                                returnId: string;
+                                /** Format: uuid */
+                                productId: string;
+                                pieces: number;
+                            }[];
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -5245,7 +6741,38 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: uuid */
+                        challanId: string;
+                        /** Format: uuid */
+                        toLocationId: string;
+                        /** @enum {string} */
+                        reason: "DAMAGED" | "WRONG_ITEM" | "QUALITY";
+                        /** @enum {string} */
+                        settlement: "REPLACE" | "CREDIT";
+                        /** Format: date */
+                        returnedOn: string;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            returnId: string;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -5270,7 +6797,38 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        number: string;
+                        /** Format: uuid */
+                        stockDocumentId: string;
+                        /** Format: uuid */
+                        challanId: string;
+                        /** Format: uuid */
+                        toLocationId: string;
+                        /** @enum {string} */
+                        reason: "DAMAGED" | "WRONG_ITEM" | "QUALITY";
+                        /** @enum {string} */
+                        settlement: "REPLACE" | "CREDIT";
+                        /** Format: date */
+                        returnedOn: string;
+                        /** Format: date-time */
+                        reversedAt: string | null;
+                        /** Format: uuid */
+                        recordedById: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        lines: {
+                            /** Format: uuid */
+                            returnId: string;
+                            /** Format: uuid */
+                            productId: string;
+                            pieces: number;
+                        }[];
+                    };
+                };
             };
         };
     };

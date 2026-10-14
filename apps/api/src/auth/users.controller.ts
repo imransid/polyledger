@@ -15,7 +15,6 @@ import {
   ApiNoContentResponse,
   ApiOkResponse,
 } from '@nestjs/swagger';
-import { userResponse } from './responses.js';
 import { z } from 'zod';
 import { activeFilter, listQuery, pageOf } from '../common/list-query.js';
 import { phoneSchema } from '../common/phone.js';
@@ -33,7 +32,9 @@ import {
 } from './decorators.js';
 import { emailSchema } from './domain/login.js';
 import { passwordSchema } from './domain/password.js';
+import { ListOperatorsQuery } from './queries/list-operators.js';
 import { ListUsersQuery } from './queries/list-users.js';
+import { operatorsResponse, userResponse } from './responses.js';
 
 const createUserBody = z
   .object({
@@ -65,6 +66,14 @@ export class UsersController {
   @ApiOkResponse({ standardSchema: pageOf(userResponse) })
   list(@Query({ schema: userList }) query: z.infer<typeof userList>) {
     return this.queryBus.execute(new ListUsersQuery(query));
+  }
+
+  // Only names, for the roles that record production: who ran a shift.
+  @Roles(Role.OWNER, Role.MANAGER, Role.SUPERVISOR, Role.OPERATOR)
+  @Get('operators')
+  @ApiOkResponse({ standardSchema: operatorsResponse })
+  operators() {
+    return this.queryBus.execute(new ListOperatorsQuery());
   }
 
   @Post()

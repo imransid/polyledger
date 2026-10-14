@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { useUrlFilters } from '@/components/use-url-filters';
 import { text } from '@/i18n';
 import { formatChange, formatMoment, formatQuantity } from '@/lib/format';
-import { DocumentLink } from './parts';
+import { DocumentLink } from '@/components/document-link';
 import { useItems } from './use-stock';
 
 const words = text.stock;

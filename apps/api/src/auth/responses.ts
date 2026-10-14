@@ -11,6 +11,10 @@ export const tokensResponse = z.object({
     .describe('Left out with X-Client: office, which gets it as a cookie'),
 });
 
+export const operatorsResponse = z.array(
+  z.object({ id: z.uuid(), name: z.string() }),
+);
+
 export const userResponse = z.object({
   id: z.uuid(),
   name: z.string(),

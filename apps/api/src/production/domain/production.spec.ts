@@ -59,6 +59,7 @@ describe('summarize', () => {
       plannedPieces: 10_000,
       goodPieces: 1_000,
       rejectedPieces: 40,
+      piecesOnFloor: 1_000,
       rejectedGrams: grams(100),
       issued: new Map([['pp', grams(20_000)]]),
       returned: new Map([['pp', grams(2_000)]]),

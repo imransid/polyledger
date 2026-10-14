@@ -27,6 +27,7 @@ import { STOCK_READERS } from './roles.js';
 const documentList = listQuery
   .extend({
     kind: z.enum(StockDocumentKind).optional(),
+    jobCardId: z.uuid().optional(),
     from: z.iso.date().optional(),
     to: z.iso.date().optional(),
   })

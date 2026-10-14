@@ -3,10 +3,15 @@ import { useState } from 'react';
 
 // One Idempotency-Key per form or action: a double click, or a retry after
 // a lost answer, sends the same key and the API records the write once.
-export function useWrite(listKey: string) {
+export function useWrite(...refreshes: string[]) {
   const [key, setKey] = useState(() => crypto.randomUUID());
   const queryClient = useQueryClient();
-  const refresh = () => queryClient.invalidateQueries({ queryKey: [listKey] });
+  const refresh = () =>
+    Promise.all(
+      refreshes.map((key) =>
+        queryClient.invalidateQueries({ queryKey: [key] }),
+      ),
+    );
   return {
     headers: { 'Idempotency-Key': key },
     /** The form stays open, so its next save is a new write. */

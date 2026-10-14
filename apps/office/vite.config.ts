@@ -42,5 +42,8 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     environment: 'jsdom',
     setupFiles: ['src/test/setup.ts'],
+    // Typing into whole forms is slow on a busy machine, such as CI running
+    // the API's database tests next to these.
+    testTimeout: 15_000,
   },
 });

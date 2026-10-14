@@ -4,6 +4,7 @@ import {
   type Page,
   pageArgs,
 } from '../../common/list-query.js';
+import { fromDateString } from '../../common/dates.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { JobCardStatus } from '../../generated/prisma/client.js';
 import { type JobCardView, toJobCardView } from '../infra/job-cards.js';
@@ -13,6 +14,9 @@ export interface JobCardFilter extends ListQuery {
   machineId?: string;
   productId?: string;
   salesOrderId?: string;
+  /** Planned start dates, both included. */
+  plannedFrom?: string;
+  plannedTo?: string;
 }
 
 export class ListJobCardsQuery extends Query<Page<JobCardView>> {
@@ -31,6 +35,12 @@ export class ListJobCardsHandler implements IQueryHandler<ListJobCardsQuery> {
       machineId: filter.machineId,
       productId: filter.productId,
       salesOrderId: filter.salesOrderId,
+      plannedStartDate: {
+        gte: filter.plannedFrom
+          ? fromDateString(filter.plannedFrom)
+          : undefined,
+        lte: filter.plannedTo ? fromDateString(filter.plannedTo) : undefined,
+      },
       ...(filter.search && {
         number: { contains: filter.search, mode: 'insensitive' as const },
       }),

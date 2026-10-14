@@ -4,6 +4,7 @@ export interface SummaryInputs {
   plannedPieces: number;
   goodPieces: number;
   rejectedPieces: number;
+  piecesOnFloor: number;
   rejectedGrams: Grams;
   issued: Map<string, Grams>;
   returned: Map<string, Grams>;
@@ -30,6 +31,8 @@ export interface JobCardSummary {
   plannedPieces: number;
   goodPieces: number;
   rejectedPieces: number;
+  /** Good pieces made and not yet handed over to a store. */
+  piecesOnFloor: number;
   /** Rejected out of all pieces made: 2.35% is 235. */
   rejectBasisPoints: number;
   materials: MaterialSummary[];
@@ -96,6 +99,7 @@ export function summarize(inputs: SummaryInputs): JobCardSummary {
     plannedPieces: inputs.plannedPieces,
     goodPieces: inputs.goodPieces,
     rejectedPieces: inputs.rejectedPieces,
+    piecesOnFloor: inputs.piecesOnFloor,
     rejectBasisPoints,
     materials,
     waste: {

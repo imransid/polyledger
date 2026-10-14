@@ -23,7 +23,8 @@ import {
   parseItemValue,
   stockLines,
 } from './lines';
-import { ItemSelect, LineInfo, PostedNotice, StockLineFields } from './parts';
+import { PostedNotice } from '@/components/document-link';
+import { ItemSelect, LineInfo, StockLineFields } from './parts';
 import { useItems, useLocationBalances, usePosting } from './use-stock';
 
 const words = text.stock.adjust;

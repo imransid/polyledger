@@ -19,7 +19,8 @@ import {
   parseItemValue,
   stockLines,
 } from './lines';
-import { ItemSelect, PostedNotice, StockLineFields } from './parts';
+import { PostedNotice } from '@/components/document-link';
+import { ItemSelect, StockLineFields } from './parts';
 import { useItems, usePosting } from './use-stock';
 
 const words = text.stock.opening;

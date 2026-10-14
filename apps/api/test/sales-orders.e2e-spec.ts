@@ -4,6 +4,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ALL_ROLES } from '../src/auth/decorators.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { Role } from '../src/generated/prisma/client.js';
+import { pageOf } from '../src/common/list-query.js';
+import {
+  materialCheckResponse,
+  materialShortagesResponse,
+  orderDeliveryResponse,
+  salesOrderResponse,
+} from '../src/orders/responses.js';
 import { SALES_EDITORS, SALES_READERS } from '../src/orders/roles.js';
 import { type Api, apiFor, startApp, tokenFor } from './support.js';
 
@@ -498,6 +505,45 @@ describe('sales orders', () => {
     expect(await list('deliveryTo=2020-12-31')).toHaveLength(3);
     expect(await list('search=po-old')).toEqual([overdue.id]);
     expect(await list(`search=${future.number}`)).toEqual([future.id]);
+  });
+
+  it('marks open orders past their delivery date as late', async () => {
+    const overdue = await confirmed({
+      orderDate: '2020-01-01',
+      deliveryDate: '2020-01-10',
+    });
+    const closed = await confirmed({
+      orderDate: '2020-01-01',
+      deliveryDate: '2020-01-10',
+    });
+    await act(closed.id, 'start-production').expect(200);
+    await act(closed.id, 'close-short', { reason: 'Done' }).expect(200);
+    const future = await createOrder({ deliveryDate: '2099-01-01' });
+    const late = async (id: string) =>
+      (await owner.get(`/sales-orders/${id}`).expect(200)).body.late;
+
+    expect(await late(overdue.id)).toBe(true);
+    expect(await late(closed.id)).toBe(false);
+    expect(await late(future.id)).toBe(false);
+  });
+
+  it('answers in the shapes the OpenAPI spec promises', async () => {
+    const so = await confirmed();
+    const read = async (path: string) =>
+      (await owner.get(path).expect(200)).body;
+
+    salesOrderResponse.strict().parse(so);
+    pageOf(salesOrderResponse.strict()).parse(await read('/sales-orders'));
+    salesOrderResponse.strict().parse(await read(`/sales-orders/${so.id}`));
+    orderDeliveryResponse
+      .strict()
+      .parse(await read(`/sales-orders/${so.id}/delivery`));
+    materialCheckResponse
+      .strict()
+      .parse(await read(`/sales-orders/${so.id}/material-check`));
+    materialShortagesResponse
+      .strict()
+      .parse(await read('/sales-orders/material-shortages'));
   });
 
   it('records the same create once when it is sent twice', async () => {

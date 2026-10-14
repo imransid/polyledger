@@ -56,3 +56,14 @@ export const TRANSITIONS: Record<
     event: 'cancelled',
   },
 };
+
+/** Statuses that still owe the customer something. */
+export const OPEN: SalesOrderStatus[] = ['DRAFT', 'CONFIRMED', 'IN_PRODUCTION'];
+
+// Late: still open the day after its delivery date (factory dates).
+export function isLate(
+  order: { status: SalesOrderStatus; deliveryDate: string },
+  today: string,
+): boolean {
+  return OPEN.includes(order.status) && order.deliveryDate < today;
+}

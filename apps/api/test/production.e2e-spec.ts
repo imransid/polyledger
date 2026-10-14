@@ -1,8 +1,22 @@
 import type { INestApplication } from '@nestjs/common';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { ALL_ROLES } from '../src/auth/decorators.js';
+import { factoryToday } from '../src/common/dates.js';
+import { pageOf } from '../src/common/list-query.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { Role } from '../src/generated/prisma/client.js';
+import {
+  closedJobCardResponse,
+  entryResponse,
+  entryWithWarningsResponse,
+  issueSuggestionResponse,
+  jobCardResponse,
+  machineBoardResponse,
+  summaryResponse,
+  wasteEntryResponse,
+} from '../src/production/responses.js';
+import { postedDocumentResponse } from '../src/stock/responses.js';
 import { type Api, apiFor, startApp, tokenFor } from './support.js';
 
 const { OWNER, MANAGER, SUPERVISOR, STOREKEEPER, OPERATOR } = Role;
@@ -489,6 +503,13 @@ describe('production', () => {
         'Good + rejected is 900 pieces, but shots x cavities is 1000',
         'Shot counter starts at 300, but the previous entry on this machine ended at 260',
       ]);
+      // The list shows the same warnings later, for the supervisor.
+      const listed = (
+        await supervisor.get(`/job-cards/${card.id}/entries`).expect(200)
+      ).body;
+      expect(
+        listed.map((entry: { warnings: string[] }) => entry.warnings),
+      ).toEqual([[], second.body.warnings]);
     });
 
     it('cannot consume more than is on the floor', async () => {
@@ -653,6 +674,7 @@ describe('production', () => {
         plannedPieces: 10_000,
         goodPieces: 1_000,
         rejectedPieces: 40,
+        piecesOnFloor: 0,
         // 40 of 1,040 pieces made = 3.85%.
         rejectBasisPoints: 385,
         materials: [
@@ -689,6 +711,138 @@ describe('production', () => {
       expect(
         (await owner.get(`/job-cards/${card.id}/summary`).expect(200)).body,
       ).toEqual(closed.summary);
+    });
+  });
+
+  describe('for the office screens', () => {
+    it('filters job cards by planned date and counts the pieces still on the floor', async () => {
+      const card = await runningCard({ plannedStartDate: '2026-10-20' });
+      await createCard({ mouldId: mould2, plannedStartDate: '2026-10-25' });
+      await issueEnough(card.id);
+      await record(card.id).expect(201);
+      await handOver(card.id, 400).expect(201);
+
+      const planned = (
+        await owner
+          .get('/job-cards?plannedFrom=2026-10-19&plannedTo=2026-10-21')
+          .expect(200)
+      ).body;
+      expect(planned.items.map((c: { id: string }) => c.id)).toEqual([card.id]);
+      const summary = (
+        await owner.get(`/job-cards/${card.id}/summary`).expect(200)
+      ).body;
+      expect(summary.piecesOnFloor).toBe(600);
+    });
+
+    it('lists the stock documents of one job card', async () => {
+      const card = await runningCard();
+      await issueEnough(card.id);
+      await record(card.id).expect(201);
+      await createCard({ mouldId: mould2 });
+
+      const documents = (
+        await owner.get(`/stock/documents?jobCardId=${card.id}`).expect(200)
+      ).body;
+      expect(
+        documents.items
+          .map((document: { kind: string }) => document.kind)
+          .sort(),
+      ).toEqual(['ISSUE', 'PRODUCTION']);
+    });
+
+    it("shows each machine: running, idle or in repair, with today's pieces", async () => {
+      const today = factoryToday();
+      const running = await runningCard({ plannedStartDate: today });
+      await issueEnough(running.id);
+      await record(running.id, { shiftDate: today }).expect(201);
+      const repair = await created('/machines', {
+        code: 'IM-03',
+        name: 'IM-03',
+        tonnage: 250,
+      });
+      await owner
+        .patch(`/machines/${repair}`)
+        .send({ status: 'REPAIR' })
+        .expect(200);
+      const retired = await created('/machines', {
+        code: 'IM-04',
+        name: 'IM-04',
+        tonnage: 250,
+      });
+      await owner
+        .patch(`/machines/${retired}`)
+        .send({ status: 'RETIRED' })
+        .expect(200);
+
+      const board = (
+        await supervisor.get('/production/machine-board').expect(200)
+      ).body;
+
+      expect(board).toEqual([
+        {
+          machineId: machine1,
+          code: 'IM-01',
+          name: 'IM-01',
+          state: 'RUNNING',
+          jobCard: {
+            id: running.id,
+            number: running.number,
+            productId: cap,
+            productCode: 'CAP-28',
+          },
+          goodPiecesToday: 1_000,
+          rejectedPiecesToday: 40,
+          rejectBasisPointsToday: 385,
+        },
+        {
+          machineId: machine2,
+          code: 'IM-02',
+          name: 'IM-02',
+          state: 'IDLE',
+          jobCard: null,
+          goodPiecesToday: 0,
+          rejectedPiecesToday: 0,
+          rejectBasisPointsToday: null,
+        },
+        expect.objectContaining({ code: 'IM-03', state: 'REPAIR' }),
+      ]);
+      machineBoardResponse.parse(board);
+    });
+
+    it('answers in the shapes the OpenAPI spec promises', async () => {
+      const card = await runningCard();
+      const read = async (path: string) =>
+        (await owner.get(path).expect(200)).body;
+      const slip = (await issueEnough(card.id)).body;
+      const entry = (await record(card.id).expect(201)).body;
+
+      jobCardResponse.strict().parse(card);
+      pageOf(jobCardResponse.strict()).parse(await read('/job-cards'));
+      jobCardResponse.strict().parse(await read(`/job-cards/${card.id}`));
+      summaryResponse
+        .strict()
+        .parse(await read(`/job-cards/${card.id}/summary`));
+      issueSuggestionResponse.parse(
+        await read(`/job-cards/${card.id}/issue-suggestion`),
+      );
+      entryWithWarningsResponse.strict().parse(entry);
+      z.array(entryWithWarningsResponse.strict()).parse(
+        await read(`/job-cards/${card.id}/entries`),
+      );
+      z.array(wasteEntryResponse.strict()).parse(
+        await read(`/job-cards/${card.id}/waste`),
+      );
+      postedDocumentResponse.strict().parse(slip);
+      entryResponse
+        .strict()
+        .parse((await reverseEntry(card.id, entry.id).expect(201)).body);
+      await giveBack(card.id, [
+        [pp, '20'],
+        [mb, '0.5'],
+      ]).expect(201);
+      closedJobCardResponse
+        .strict()
+        .parse((await act(card.id, 'close').expect(200)).body);
     });
   });
 

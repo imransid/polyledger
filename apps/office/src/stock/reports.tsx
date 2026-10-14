@@ -10,7 +10,7 @@ import { useUrlFilters } from '@/components/use-url-filters';
 import { text } from '@/i18n';
 import { addDays, factoryToday } from '@/lib/dates';
 import { formatDay, formatWeight } from '@/lib/format';
-import { DocumentLink } from './parts';
+import { DocumentLink } from '@/components/document-link';
 import { useItems } from './use-stock';
 
 const words = text.stock;

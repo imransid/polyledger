@@ -2,9 +2,14 @@ import { randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import type { Response } from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { ALL_ROLES } from '../src/auth/decorators.js';
 import { factoryToday } from '../src/common/dates.js';
 import { PrismaService } from '../src/database/prisma.service.js';
+import {
+  challanResponse,
+  customerReturnResponse,
+} from '../src/dispatch/responses.js';
 import { Role } from '../src/generated/prisma/client.js';
 import { type Api, apiFor, startApp, tokenFor } from './support.js';
 
@@ -617,6 +622,19 @@ describe('dispatch', () => {
       );
       await reverseReturn(randomUUID()).expect(404);
     });
+  });
+
+  it('answers in the shapes the OpenAPI spec promises', async () => {
+    const { order, challan } = await shipped();
+    const returned = (await recordReturn(challan.id, [[cap, 30]]).expect(201))
+      .body;
+
+    challanResponse.strict().parse(challan);
+    customerReturnResponse.strict().parse(returned);
+    z.array(challanResponse.strict()).parse(
+      (await owner.get(`/dispatch/challans?orderId=${order.id}`).expect(200))
+        .body,
+    );
   });
 
   it('records the same challan and the same return once when sent twice', async () => {

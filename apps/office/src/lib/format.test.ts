@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatChange,
+  formatDuration,
   formatDay,
   formatGrams,
   formatMoment,
@@ -42,5 +43,11 @@ describe('format', () => {
     expect(formatPieces(120_000)).toBe('1,20,000 pcs');
     expect(formatChange('RAW_MATERIAL', 12_500)).toBe('+12.500 kg');
     expect(formatChange('PRODUCT', -300)).toBe('−300 pcs');
+  });
+
+  it('shows a run time in hours and minutes, rounding up', () => {
+    expect(formatDuration(51_000)).toBe('14 h 10 min');
+    expect(formatDuration(2_699)).toBe('45 min');
+    expect(formatDuration(3_600)).toBe('1 h 0 min');
   });
 });

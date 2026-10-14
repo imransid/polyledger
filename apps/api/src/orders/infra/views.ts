@@ -1,6 +1,7 @@
-import { toDateString } from '../../common/dates.js';
+import { factoryToday, toDateString } from '../../common/dates.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import type { OrderSnapshot } from '../domain/changes.js';
+import { isLate } from '../domain/status.js';
 
 export const withLines = {
   lines: { orderBy: { lineNo: 'asc' } },
@@ -13,13 +14,15 @@ type OrderWithLines = Prisma.SalesOrderGetPayload<{
 export type SalesOrderView = Omit<
   OrderWithLines,
   'orderDate' | 'deliveryDate'
-> & { orderDate: string; deliveryDate: string };
+> & { orderDate: string; deliveryDate: string; late: boolean };
 
 export function toView(order: OrderWithLines): SalesOrderView {
+  const deliveryDate = toDateString(order.deliveryDate);
   return {
     ...order,
     orderDate: toDateString(order.orderDate),
-    deliveryDate: toDateString(order.deliveryDate),
+    deliveryDate,
+    late: isLate({ status: order.status, deliveryDate }, factoryToday()),
   };
 }
 

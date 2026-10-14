@@ -29,6 +29,8 @@ import {
   ListChallansQuery,
 } from './queries/list-challans.js';
 import { DISPATCH_MANAGERS, DISPATCH_STAFF, DISPATCHERS } from './roles.js';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { challanResponse, customerReturnResponse } from './responses.js';
 
 const productLines = z
   .array(z.object({ productId: z.uuid(), pieces: countSchema }))
@@ -103,12 +105,14 @@ export class DispatchController {
   /** An order's challans, or a customer's by dispatch date. */
   @Roles(...DISPATCH_STAFF)
   @Get('challans')
+  @ApiOkResponse({ standardSchema: z.array(challanResponse) })
   challans(@Query({ schema: challanList }) query: z.infer<typeof challanList>) {
     return this.queryBus.execute(new ListChallansQuery(query));
   }
 
   @Roles(...DISPATCH_STAFF)
   @Get('gate-passes/pending')
+  @ApiOkResponse({ standardSchema: z.array(challanResponse) })
   pendingGatePasses() {
     return this.queryBus.execute(
       new ListChallansQuery({ gatePassPending: true }),
@@ -117,6 +121,7 @@ export class DispatchController {
 
   @Roles(...DISPATCHERS)
   @Post('challans')
+  @ApiCreatedResponse({ standardSchema: challanResponse })
   postChallan(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -130,6 +135,7 @@ export class DispatchController {
   @Roles(...DISPATCH_STAFF)
   @Post('challans/:id/gate-pass')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: challanResponse })
   passGate(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -143,6 +149,7 @@ export class DispatchController {
   /** Only before the gate pass; after it, record a customer return. */
   @Roles(...DISPATCH_MANAGERS)
   @Post('challans/:id/reverse')
+  @ApiCreatedResponse({ standardSchema: challanResponse })
   reverseChallan(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -156,6 +163,7 @@ export class DispatchController {
 
   @Roles(...DISPATCH_MANAGERS)
   @Post('returns')
+  @ApiCreatedResponse({ standardSchema: customerReturnResponse })
   recordReturn(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -168,6 +176,7 @@ export class DispatchController {
 
   @Roles(...DISPATCH_MANAGERS)
   @Post('returns/:id/reverse')
+  @ApiCreatedResponse({ standardSchema: customerReturnResponse })
   reverseReturn(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,

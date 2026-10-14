@@ -10,6 +10,7 @@ import type {
   Prisma,
   SalesOrderStatus,
 } from '../../generated/prisma/client.js';
+import { OPEN } from '../domain/status.js';
 import { type SalesOrderView, toView, withLines } from '../infra/views.js';
 
 export interface SalesOrderFilter extends ListQuery {
@@ -44,9 +45,10 @@ export class ListSalesOrdersHandler implements IQueryHandler<ListSalesOrdersQuer
             lte: filter.deliveryTo && fromDateString(filter.deliveryTo),
           },
         },
+        // The same rule as isLate, in SQL.
         filter.late
           ? {
-              status: { notIn: ['COMPLETED', 'CANCELLED'] },
+              status: { in: OPEN },
               deliveryDate: { lt: fromDateString(factoryToday()) },
             }
           : {},

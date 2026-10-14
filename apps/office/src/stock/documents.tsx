@@ -25,7 +25,7 @@ import {
 } from '@/lib/format';
 import { useWrite } from '@/lib/use-write';
 import { DOCUMENT_KINDS, kindParam } from './kinds';
-import { DocumentLink, PostedNotice } from './parts';
+import { DocumentLink, PostedNotice } from '@/components/document-link';
 import { useItems } from './use-stock';
 
 const words = text.stock.documents;

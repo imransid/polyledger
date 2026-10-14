@@ -18,6 +18,7 @@ import { ProductionReportsController } from './production-reports.controller.js'
 import { GetIssueSuggestionHandler } from './queries/get-issue-suggestion.js';
 import { GetJobCardSummaryHandler } from './queries/get-job-card-summary.js';
 import { GetJobCardHandler } from './queries/get-job-card.js';
+import { GetMachineBoardHandler } from './queries/get-machine-board.js';
 import { GetWasteReportHandler } from './queries/get-waste-report.js';
 import { ListJobCardsHandler } from './queries/list-job-cards.js';
 import { ListProductionEntriesHandler } from './queries/list-production-entries.js';
@@ -47,6 +48,7 @@ import { ListWasteEntriesHandler } from './queries/list-waste-entries.js';
     GetJobCardSummaryHandler,
     ListWasteEntriesHandler,
     GetWasteReportHandler,
+    GetMachineBoardHandler,
   ],
 })
 export class ProductionModule {}

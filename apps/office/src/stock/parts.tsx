@@ -1,10 +1,8 @@
 import { X } from 'lucide-react';
 import { type ComponentProps, type ReactNode, useId } from 'react';
 import type { FieldError, UseFormRegisterReturn } from 'react-hook-form';
-import { Link } from 'react-router';
 import type { Product, RawMaterial, StockItemType } from '@/api/types';
 import { TextField } from '@/components/text-field';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { text } from '@/i18n';
@@ -12,37 +10,6 @@ import { cn } from '@/lib/utils';
 import { itemValue } from './lines';
 
 const words = text.stock;
-
-export function DocumentLink({ id, number }: { id: string; number: string }) {
-  return (
-    <Link
-      to={`/stock/documents/${id}`}
-      className="font-medium underline-offset-4 hover:underline"
-    >
-      {number}
-    </Link>
-  );
-}
-
-/** "GRN-000123 posted." after a posting, linking to the new document. */
-export function PostedNotice({
-  document,
-}: {
-  document?: { id: string; number: string };
-}) {
-  if (!document) {
-    return null;
-  }
-  return (
-    <Alert>
-      <AlertDescription>
-        <span>
-          <DocumentLink {...document} /> {words.posted}
-        </span>
-      </AlertDescription>
-    </Alert>
-  );
-}
 
 const selectClass =
   'h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive';

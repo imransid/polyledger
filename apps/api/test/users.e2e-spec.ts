@@ -1,5 +1,3 @@
-import { userResponse } from '../src/auth/responses.js';
-import { pageOf } from '../src/common/list-query.js';
 import type { INestApplication } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import request from 'supertest';
@@ -9,6 +7,8 @@ import { ALL_ROLES } from '../src/auth/decorators.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { Role } from '../src/generated/prisma/client.js';
 import { createUser, logIn, PASSWORD, startApp } from './support.js';
+import { operatorsResponse, userResponse } from '../src/auth/responses.js';
+import { pageOf } from '../src/common/list-query.js';
 
 describe('users', () => {
   let app: INestApplication;
@@ -271,6 +271,30 @@ describe('users', () => {
       await as('post', `/users/${user.id}/deactivate`).expect(403);
       await as('post', `/users/${user.id}/reactivate`).expect(403);
       await as('post', `/users/${user.id}/reset-password`).send({}).expect(403);
+    });
+
+    it('lists active operators by name to everyone who records shifts', async () => {
+      const operator = await createUser(app, Role.OPERATOR);
+      const former = await createUser(app, Role.OPERATOR, {
+        email: 'former@example.com',
+      });
+      await asOwner('post', `/users/${former.id}/deactivate`).expect(200);
+      const tokenOf = async (role: Role) => {
+        const email = `${role.toLowerCase()}@reader.example`;
+        await createUser(app, role, { email });
+        return (await logIn(app, email)).accessToken;
+      };
+      const operators = (token: string) =>
+        api().get('/users/operators').auth(token, { type: 'bearer' });
+
+      const answer = (
+        await operators(await tokenOf(Role.SUPERVISOR)).expect(200)
+      ).body;
+
+      expect(answer).toEqual([{ id: operator.id, name: 'OPERATOR user' }]);
+      operatorsResponse.parse(answer);
+      await operators(await tokenOf(Role.MANAGER)).expect(200);
+      await operators(await tokenOf(Role.STOREKEEPER)).expect(403);
     });
 
     it('asks for a token before anything else', async () => {

@@ -86,3 +86,11 @@ export function formatChange(
   const sign = amount > 0 ? '+' : amount < 0 ? '−' : '';
   return `${sign}${formatQuantity(itemType, Math.abs(amount))}`;
 }
+
+/** Seconds as "14 h 10 min", or "45 min" under an hour. */
+export function formatDuration(seconds: number): string {
+  const minutes = Math.ceil(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return hours > 0 ? `${hours} h ${rest} min` : `${rest} min`;
+}

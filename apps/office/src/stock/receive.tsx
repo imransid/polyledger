@@ -17,7 +17,8 @@ import { parseDecimal } from '@/lib/decimal';
 import { showApiError } from '@/lib/form-errors';
 import { requiredText } from '@/lib/form-fields';
 import { shortage } from './lines';
-import { LineInfo, PostedNotice } from './parts';
+import { PostedNotice } from '@/components/document-link';
+import { LineInfo } from './parts';
 import { useItems, usePosting } from './use-stock';
 
 const words = text.stock.receive;

@@ -17,3 +17,25 @@ export const STOCK_MANAGERS: Role[] = ['OWNER', 'MANAGER'];
 export function canManageStock(role: Role): boolean {
   return STOCK_MANAGERS.includes(role);
 }
+
+// The API's sales and production role lists.
+/** Create, change, confirm, cancel and close sales orders. */
+export const SALES_EDITORS: Role[] = ['OWNER', 'MANAGER'];
+/** Create, release, cancel and close job cards. */
+export const JOB_PLANNERS: Role[] = ['OWNER', 'MANAGER'];
+/** Start and stop machines; reverse shift and waste entries. */
+export const FLOOR_LEADS: Role[] = ['OWNER', 'MANAGER', 'SUPERVISOR'];
+/** Record shifts and waste; operators only their own. */
+export const ENTRY_RECORDERS: Role[] = [
+  'OWNER',
+  'MANAGER',
+  'SUPERVISOR',
+  'OPERATOR',
+];
+/** Read summaries, suggestions, entries and the machine board. */
+export const PRODUCTION_READERS: Role[] = [
+  'OWNER',
+  'MANAGER',
+  'SUPERVISOR',
+  'STOREKEEPER',
+];

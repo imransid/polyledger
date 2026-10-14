@@ -17,7 +17,7 @@ import {
   IdempotencyKey,
   Roles,
 } from '../auth/decorators.js';
-import { found, listQuery } from '../common/list-query.js';
+import { found, listQuery, pageOf } from '../common/list-query.js';
 import { countSchema } from '../common/master-data.js';
 import { INT_MAX } from '../common/quantities.js';
 import { SalesOrderStatus } from '../generated/prisma/client.js';
@@ -33,6 +33,13 @@ import { GetOrderDeliveryQuery } from './queries/get-order-delivery.js';
 import { GetSalesOrderQuery } from './queries/get-sales-order.js';
 import { ListSalesOrdersQuery } from './queries/list-sales-orders.js';
 import { SALES_EDITORS, SALES_READERS } from './roles.js';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  materialCheckResponse,
+  materialShortagesResponse,
+  orderDeliveryResponse,
+  salesOrderResponse,
+} from './responses.js';
 
 const linesSchema = z
   .array(
@@ -116,16 +123,19 @@ export class SalesOrdersController {
   ) {}
 
   @Get()
+  @ApiOkResponse({ standardSchema: pageOf(salesOrderResponse) })
   list(@Query({ schema: orderList }) query: z.infer<typeof orderList>) {
     return this.queryBus.execute(new ListSalesOrdersQuery(query));
   }
 
   @Get('material-shortages')
+  @ApiOkResponse({ standardSchema: materialShortagesResponse })
   materialShortages() {
     return this.queryBus.execute(new GetMaterialShortagesQuery());
   }
 
   @Get(':id')
+  @ApiOkResponse({ standardSchema: salesOrderResponse })
   async get(@Param('id', ParseUUIDPipe) id: string) {
     return found(
       await this.queryBus.execute(new GetSalesOrderQuery(id)),
@@ -135,6 +145,7 @@ export class SalesOrdersController {
 
   /** Per line: ordered, delivered, returned and still to deliver. */
   @Get(':id/delivery')
+  @ApiOkResponse({ standardSchema: orderDeliveryResponse })
   async delivery(@Param('id', ParseUUIDPipe) id: string) {
     return found(
       await this.queryBus.execute(new GetOrderDeliveryQuery(id)),
@@ -143,6 +154,7 @@ export class SalesOrdersController {
   }
 
   @Get(':id/material-check')
+  @ApiOkResponse({ standardSchema: materialCheckResponse })
   async materialCheck(@Param('id', ParseUUIDPipe) id: string) {
     return found(
       await this.queryBus.execute(new GetMaterialCheckQuery(id)),
@@ -152,6 +164,7 @@ export class SalesOrdersController {
 
   @Roles(...SALES_EDITORS)
   @Post()
+  @ApiCreatedResponse({ standardSchema: salesOrderResponse })
   create(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -164,6 +177,7 @@ export class SalesOrdersController {
 
   @Roles(...SALES_EDITORS)
   @Patch(':id')
+  @ApiOkResponse({ standardSchema: salesOrderResponse })
   change(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -178,6 +192,7 @@ export class SalesOrdersController {
   @Roles(...SALES_EDITORS)
   @Post(':id/confirm')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: salesOrderResponse })
   confirm(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -191,6 +206,7 @@ export class SalesOrdersController {
   @Roles(...SALES_EDITORS)
   @Post(':id/start-production')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: salesOrderResponse })
   startProduction(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -205,6 +221,7 @@ export class SalesOrdersController {
   @Roles(...SALES_EDITORS)
   @Post(':id/close-short')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: salesOrderResponse })
   closeShort(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -219,6 +236,7 @@ export class SalesOrdersController {
   @Roles(...SALES_EDITORS)
   @Post(':id/cancel')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: salesOrderResponse })
   cancel(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,

@@ -19,6 +19,7 @@ import { type Described, describe } from '../infra/document-views.js';
 
 export interface StockDocumentFilter extends ListQuery {
   kind?: StockDocumentKind;
+  jobCardId?: string;
   /** Factory dates the document was posted on, both included. */
   from?: string;
   to?: string;
@@ -44,6 +45,7 @@ export class ListStockDocumentsHandler implements IQueryHandler<ListStockDocumen
   }: ListStockDocumentsQuery): Promise<Page<Described<StockDocument>>> {
     const where = {
       kind: filter.kind,
+      jobCardId: filter.jobCardId,
       postedAt: {
         gte: filter.from ? factoryDayStart(filter.from) : undefined,
         lt: filter.to ? factoryDayStart(addDays(filter.to, 1)) : undefined,

@@ -22,12 +22,22 @@ const MasterDataArea = lazy(() =>
 const StockArea = lazy(() =>
   import('@/stock/area').then((area) => ({ default: area.StockArea })),
 );
+const OrdersArea = lazy(() =>
+  import('@/orders/area').then((area) => ({ default: area.OrdersArea })),
+);
+const ProductionArea = lazy(() =>
+  import('@/production/area').then((area) => ({
+    default: area.ProductionArea,
+  })),
+);
 const UsersArea = lazy(() =>
   import('@/users/area').then((area) => ({ default: area.UsersArea })),
 );
 
 const AREAS: Record<string, ReactNode> = {
   '/stock': <StockArea />,
+  '/orders': <OrdersArea />,
+  '/production': <ProductionArea />,
   '/master-data': <MasterDataArea />,
   '/users': <UsersArea />,
 };

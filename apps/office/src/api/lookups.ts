@@ -44,3 +44,38 @@ export function useAllSuppliers() {
         .items,
   });
 }
+
+export function useAllCustomers() {
+  return useQuery({
+    queryKey: ['customers', 'all'],
+    queryFn: async () =>
+      (await unwrap(api.GET('/customers', { params: { query: EVERYTHING } })))
+        .items,
+  });
+}
+
+export function useAllMachines() {
+  return useQuery({
+    queryKey: ['machines', 'all'],
+    queryFn: async () =>
+      (await unwrap(api.GET('/machines', { params: { query: EVERYTHING } })))
+        .items,
+  });
+}
+
+export function useAllMoulds() {
+  return useQuery({
+    queryKey: ['moulds', 'all'],
+    queryFn: async () =>
+      (await unwrap(api.GET('/moulds', { params: { query: EVERYTHING } })))
+        .items,
+  });
+}
+
+/** Active operators, for choosing who ran a shift. */
+export function useOperators() {
+  return useQuery({
+    queryKey: ['users', 'operators'],
+    queryFn: () => unwrap(api.GET('/users/operators')),
+  });
+}

@@ -91,6 +91,7 @@ export class JobCardReporter {
       plannedPieces: card.plannedPieces,
       goodPieces: toSafeNumber(pieces.good),
       rejectedPieces,
+      piecesOnFloor: stock.piecesOnFloor,
       rejectedGrams: gramsForPieces(rejectedPieces, card.pieceWeightMg),
       issued: stock.issued,
       returned: stock.returned,

@@ -1,5 +1,3 @@
-import { z } from 'zod';
-import { formulaVersionResponse } from '../src/formulas/responses.js';
 import { randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -12,6 +10,8 @@ import {
 import { PrismaService } from '../src/database/prisma.service.js';
 import { Role } from '../src/generated/prisma/client.js';
 import { startApp, tokenFor } from './support.js';
+import { z } from 'zod';
+import { formulaVersionResponse } from '../src/formulas/responses.js';
 
 interface Line {
   rawMaterialId: string;

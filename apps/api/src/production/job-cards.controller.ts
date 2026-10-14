@@ -17,7 +17,7 @@ import {
   IdempotencyKey,
   Roles,
 } from '../auth/decorators.js';
-import { found, listQuery } from '../common/list-query.js';
+import { found, listQuery, pageOf } from '../common/list-query.js';
 import { countSchema } from '../common/master-data.js';
 import {
   INT_MAX,
@@ -51,6 +51,17 @@ import {
   PRODUCTION_READERS,
   STORE_STAFF,
 } from './roles.js';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { postedDocumentResponse } from '../stock/responses.js';
+import {
+  closedJobCardResponse,
+  entryResponse,
+  entryWithWarningsResponse,
+  issueSuggestionResponse,
+  jobCardResponse,
+  summaryResponse,
+  wasteEntryResponse,
+} from './responses.js';
 
 const jobCardBody = z.object({
   productId: z.uuid(),
@@ -153,6 +164,8 @@ const jobCardList = listQuery.extend({
   machineId: z.uuid().optional(),
   productId: z.uuid().optional(),
   salesOrderId: z.uuid().optional(),
+  plannedFrom: z.iso.date().optional(),
+  plannedTo: z.iso.date().optional(),
 });
 
 // Operators may read job cards so the tablet can pick one; everything else
@@ -166,11 +179,13 @@ export class JobCardsController {
   ) {}
 
   @Get()
+  @ApiOkResponse({ standardSchema: pageOf(jobCardResponse) })
   list(@Query({ schema: jobCardList }) query: z.infer<typeof jobCardList>) {
     return this.queryBus.execute(new ListJobCardsQuery(query));
   }
 
   @Get(':id')
+  @ApiOkResponse({ standardSchema: jobCardResponse })
   async get(@Param('id', ParseUUIDPipe) id: string) {
     return found(
       await this.queryBus.execute(new GetJobCardQuery(id)),
@@ -180,6 +195,7 @@ export class JobCardsController {
 
   @Roles(...PRODUCTION_READERS)
   @Get(':id/summary')
+  @ApiOkResponse({ standardSchema: summaryResponse })
   async summary(@Param('id', ParseUUIDPipe) id: string) {
     return found(
       await this.queryBus.execute(new GetJobCardSummaryQuery(id)),
@@ -189,6 +205,7 @@ export class JobCardsController {
 
   @Roles(...PRODUCTION_READERS)
   @Get(':id/issue-suggestion')
+  @ApiOkResponse({ standardSchema: issueSuggestionResponse })
   async issueSuggestion(@Param('id', ParseUUIDPipe) id: string) {
     return found(
       await this.queryBus.execute(new GetIssueSuggestionQuery(id)),
@@ -198,18 +215,21 @@ export class JobCardsController {
 
   @Roles(...PRODUCTION_READERS)
   @Get(':id/entries')
+  @ApiOkResponse({ standardSchema: z.array(entryWithWarningsResponse) })
   entries(@Param('id', ParseUUIDPipe) id: string) {
     return this.queryBus.execute(new ListProductionEntriesQuery(id));
   }
 
   @Roles(...PRODUCTION_READERS)
   @Get(':id/waste')
+  @ApiOkResponse({ standardSchema: z.array(wasteEntryResponse) })
   waste(@Param('id', ParseUUIDPipe) id: string) {
     return this.queryBus.execute(new ListWasteEntriesQuery(id));
   }
 
   @Roles(...JOB_PLANNERS)
   @Post()
+  @ApiCreatedResponse({ standardSchema: jobCardResponse })
   create(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -223,6 +243,7 @@ export class JobCardsController {
   @Roles(...JOB_PLANNERS)
   @Post(':id/release')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: jobCardResponse })
   release(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -236,6 +257,7 @@ export class JobCardsController {
   @Roles(...FLOOR_LEADS)
   @Post(':id/start')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: jobCardResponse })
   start(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -249,6 +271,7 @@ export class JobCardsController {
   @Roles(...FLOOR_LEADS)
   @Post(':id/stop')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: jobCardResponse })
   stop(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -262,6 +285,7 @@ export class JobCardsController {
   @Roles(...JOB_PLANNERS)
   @Post(':id/cancel')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: jobCardResponse })
   cancel(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -276,6 +300,7 @@ export class JobCardsController {
   @Roles(...JOB_PLANNERS)
   @Post(':id/close')
   @HttpCode(200)
+  @ApiOkResponse({ standardSchema: closedJobCardResponse })
   close(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -288,6 +313,7 @@ export class JobCardsController {
 
   @Roles(...STORE_STAFF)
   @Post(':id/issues')
+  @ApiCreatedResponse({ standardSchema: postedDocumentResponse })
   issue(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -307,6 +333,7 @@ export class JobCardsController {
 
   @Roles(...STORE_STAFF)
   @Post(':id/handovers')
+  @ApiCreatedResponse({ standardSchema: postedDocumentResponse })
   handOver(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -326,6 +353,7 @@ export class JobCardsController {
 
   @Roles(...STORE_STAFF)
   @Post(':id/returns')
+  @ApiCreatedResponse({ standardSchema: postedDocumentResponse })
   returnMaterial(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -350,6 +378,7 @@ export class JobCardsController {
    */
   @Roles(...ENTRY_RECORDERS)
   @Post(':id/entries')
+  @ApiCreatedResponse({ standardSchema: entryWithWarningsResponse })
   recordProduction(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -363,6 +392,7 @@ export class JobCardsController {
 
   @Roles(...FLOOR_LEADS)
   @Post(':id/entries/:entryId/reverse')
+  @ApiCreatedResponse({ standardSchema: entryResponse })
   reverseEntry(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -389,6 +419,7 @@ export class JobCardsController {
    */
   @Roles(...ENTRY_RECORDERS)
   @Post(':id/waste')
+  @ApiCreatedResponse({ standardSchema: wasteEntryResponse })
   recordWaste(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -402,6 +433,7 @@ export class JobCardsController {
 
   @Roles(...FLOOR_LEADS)
   @Post(':id/waste/:entryId/reverse')
+  @ApiCreatedResponse({ standardSchema: wasteEntryResponse })
   reverseWaste(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
