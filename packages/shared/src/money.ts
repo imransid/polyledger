@@ -19,3 +19,17 @@ export function poishaForGrams(
   }
   return poisha;
 }
+
+const TAKA = new Intl.NumberFormat('en-IN');
+
+// ৳1,23,456.50: amounts in Bangladesh group by lakh and crore.
+export function formatPoisha(poisha: number): string {
+  if (!Number.isSafeInteger(poisha)) {
+    throw new RangeError(`Not a whole number of poisha: ${poisha}`);
+  }
+  const sign = poisha < 0 ? '-' : '';
+  const absolute = Math.abs(poisha);
+  const taka = TAKA.format(Math.floor(absolute / 100));
+  const paisa = String(absolute % 100).padStart(2, '0');
+  return `${sign}৳${taka}.${paisa}`;
+}

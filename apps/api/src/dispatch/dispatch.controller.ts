@@ -16,7 +16,6 @@ import {
   IdempotencyKey,
   Roles,
 } from '../auth/decorators.js';
-import { dateRangeQuery } from '../common/list-query.js';
 import { countSchema } from '../common/master-data.js';
 import { phoneSchema } from '../common/phone.js';
 import { ReturnReason, ReturnSettlement } from '../generated/prisma/client.js';
@@ -25,7 +24,10 @@ import { PostChallanCommand } from './commands/post-challan.js';
 import { RecordCustomerReturnCommand } from './commands/record-customer-return.js';
 import { ReverseChallanCommand } from './commands/reverse-challan.js';
 import { ReverseCustomerReturnCommand } from './commands/reverse-customer-return.js';
-import { ListChallansQuery } from './queries/list-challans.js';
+import {
+  type ChallanFilter,
+  ListChallansQuery,
+} from './queries/list-challans.js';
 import { DISPATCH_MANAGERS, DISPATCH_STAFF, DISPATCHERS } from './roles.js';
 
 const productLines = z
@@ -66,10 +68,28 @@ const returnBody = z.object({
   lines: productLines,
 });
 
-const challanList = z.union([
-  z.object({ orderId: z.uuid() }),
-  dateRangeQuery.safeExtend({ customerId: z.uuid() }),
-]);
+// One flat object rather than a union, so the OpenAPI spec lists the params.
+const challanList = z
+  .object({
+    orderId: z.uuid().optional(),
+    customerId: z.uuid().optional(),
+    from: z.iso.date().optional(),
+    to: z.iso.date().optional(),
+  })
+  .transform(({ orderId, customerId, from, to }, ctx): ChallanFilter => {
+    if (orderId) {
+      return { orderId };
+    }
+    if (customerId && from && to && from <= to) {
+      return { customerId, from, to };
+    }
+    ctx.issues.push({
+      code: 'custom',
+      message: 'Give an orderId, or a customerId with from and to',
+      input: { orderId, customerId, from, to },
+    });
+    return z.NEVER;
+  });
 
 const reasonBody = z.object({ reason: z.string().trim().min(1).max(300) });
 
@@ -84,11 +104,7 @@ export class DispatchController {
   @Roles(...DISPATCH_STAFF)
   @Get('challans')
   challans(@Query({ schema: challanList }) query: z.infer<typeof challanList>) {
-    return this.queryBus.execute(
-      new ListChallansQuery(
-        'orderId' in query ? { orderId: query.orderId } : query,
-      ),
-    );
+    return this.queryBus.execute(new ListChallansQuery(query));
   }
 
   @Roles(...DISPATCH_STAFF)

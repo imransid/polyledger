@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { poishaForGrams } from './money.js';
+import { formatPoisha, poishaForGrams } from './money.js';
 
 describe('poishaForGrams', () => {
   it.each([
@@ -23,5 +23,22 @@ describe('poishaForGrams', () => {
     [100, -1],
   ])('rejects %d g at %d poisha/kg', (grams, price) => {
     expect(() => poishaForGrams(grams, price)).toThrow(RangeError);
+  });
+});
+
+describe('formatPoisha', () => {
+  it.each([
+    [12_345_650, '৳1,23,456.50'],
+    [1_000_000_000, '৳1,00,00,000.00'],
+    [99_999, '৳999.99'],
+    [5, '৳0.05'],
+    [0, '৳0.00'],
+    [-150, '-৳1.50'],
+  ])('%d poisha is %s', (poisha, text) => {
+    expect(formatPoisha(poisha)).toBe(text);
+  });
+
+  it('refuses fractions of a poisha', () => {
+    expect(() => formatPoisha(1.5)).toThrow(RangeError);
   });
 });

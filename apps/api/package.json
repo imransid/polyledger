@@ -5,13 +5,15 @@
   "type": "module",
   "scripts": {
     "build": "nest build",
-    "dev": "nest start --watch --preserveWatchOutput --exec \"node --watch\"",
+    "dev": "NODE_ENV=development nest start --watch --preserveWatchOutput --exec \"node --watch\"",
     "start": "nest start",
     "start:prod": "node dist/main.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "prepare": "prisma generate"
+    "prepare": "prisma generate",
+    "openapi": "vitest run test/openapi.e2e-spec.ts --update",
+    "seed:demo": "nest build && node dist/demo/main.js"
   },
   "dependencies": {
     "@nestjs/common": "^12.1.2",
@@ -20,6 +22,7 @@
     "@nestjs/cqrs": "^12.1.0",
     "@nestjs/jwt": "^12.0.3",
     "@nestjs/platform-express": "^12.1.2",
+    "@nestjs/swagger": "^12.0.2",
     "@nestjs/throttler": "^6.7.1",
     "@node-rs/argon2": "^2.2.2",
     "@polyledger/shared": "workspace:*",
@@ -33,6 +36,7 @@
     "@nestjs/cli": "^12.0.8",
     "@nestjs/testing": "^12.1.2",
     "@testcontainers/postgresql": "^12.2.0",
+    "@types/express": "^5.0.6",
     "@types/node": "^22.20.5",
     "@types/supertest": "^7.2.1",
     "dotenv": "^18.0.7",

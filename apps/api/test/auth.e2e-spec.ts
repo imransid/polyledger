@@ -2,6 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PrismaService } from '../src/database/prisma.service.js';
+import { currentUserResponse, tokensResponse } from '../src/auth/responses.js';
 import { Role } from '../src/generated/prisma/client.js';
 import { createUser, logIn, PASSWORD, startApp } from './support.js';
 
@@ -33,6 +34,9 @@ describe('auth', () => {
         isActive: true,
       });
       expect(response.body).not.toHaveProperty('passwordHash');
+      // What the OpenAPI spec promises the office client.
+      tokensResponse.strict().parse(tokens);
+      currentUserResponse.strict().parse(response.body);
     });
 
     it('accepts both phone formats', async () => {
@@ -133,6 +137,56 @@ describe('auth', () => {
 
       await refresh(tokens.refreshToken).expect(401);
       await me(tokens.accessToken).expect(401);
+    });
+  });
+
+  describe('the office app', () => {
+    const office = (path: string, cookie?: string) => {
+      const call = api().post(path).set('X-Client', 'office');
+      return cookie ? call.set('Cookie', cookie) : call;
+    };
+    const refreshCookie = (response: request.Response) => {
+      const cookies = [response.headers['set-cookie'] ?? []].flat();
+      return cookies.find((c: string) => c.startsWith('polyledger_refresh='));
+    };
+
+    it('keeps the refresh token in an httpOnly cookie, out of the body', async () => {
+      const login = await office('/auth/login')
+        .send({ login: 'operator@example.com', password: PASSWORD })
+        .expect(200);
+
+      expect(Object.keys(login.body)).toEqual(['accessToken']);
+      const cookie = refreshCookie(login)!;
+      expect(cookie).toMatch(/HttpOnly/);
+      expect(cookie).toMatch(/SameSite=Strict/);
+      expect(cookie).toMatch(/Path=\/api\/auth/);
+      expect(cookie).toMatch(/Secure/);
+
+      const refreshed = await office(
+        '/auth/refresh',
+        cookie.split(';')[0],
+      ).expect(200);
+      expect(Object.keys(refreshed.body)).toEqual(['accessToken']);
+      await me(refreshed.body.accessToken).expect(200);
+      const rotated = refreshCookie(refreshed)!;
+      expect(rotated).not.toBe(cookie);
+
+      const logout = await office('/auth/logout', rotated.split(';')[0]).expect(
+        204,
+      );
+      expect(refreshCookie(logout)).toMatch(/Expires=Thu, 01 Jan 1970/);
+      await office('/auth/refresh', rotated.split(';')[0]).expect(401);
+    });
+
+    it('needs the header for the cookie to count', async () => {
+      const login = await office('/auth/login')
+        .send({ login: 'operator@example.com', password: PASSWORD })
+        .expect(200);
+      const cookie = refreshCookie(login)!.split(';')[0];
+
+      await api().post('/auth/refresh').set('Cookie', cookie).expect(401);
+      const missing = await office('/auth/refresh').expect(401);
+      expect(missing.body.message).toBe('Not logged in');
     });
   });
 

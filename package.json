@@ -8,10 +8,15 @@
   "scripts": {
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
+    "dev": "pnpm --filter @polyledger/shared build && pnpm --parallel --filter @polyledger/shared --filter @polyledger/api --filter @polyledger/office dev",
     "dev:api": "pnpm --filter @polyledger/shared build && pnpm --parallel --filter @polyledger/shared --filter @polyledger/api dev",
+    "dev:office": "pnpm --filter @polyledger/shared build && pnpm --filter @polyledger/office dev",
+    "db:seed:demo": "pnpm --filter @polyledger/shared build && pnpm --filter @polyledger/api seed:demo",
+    "api:client": "pnpm --filter @polyledger/api openapi && pnpm --filter @polyledger/office api:generate",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
     "prepare": "git config core.hooksPath .githooks",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

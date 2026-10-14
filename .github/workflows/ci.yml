@@ -29,7 +29,15 @@ jobs:
 
       - run: pnpm typecheck
 
+      - run: pnpm lint
+
       - run: pnpm format:check
+
+      - run: pnpm build
+
+      # The office client must match the committed spec; the API tests check
+      # the spec against the code.
+      - run: pnpm --filter @polyledger/office api:generate && git diff --exit-code apps/office/src/api/schema.d.ts
 
       # Integration tests start Postgres through Testcontainers on the runner's Docker.
       - run: pnpm test

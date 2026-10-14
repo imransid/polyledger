@@ -11,3 +11,5 @@ allowBuilds:
   cpu-features: false
   protobufjs: false
   ssh2: false
+  # Usage analytics ping from swagger-ui-dist (behind @nestjs/swagger).
+  '@scarf/scarf': false

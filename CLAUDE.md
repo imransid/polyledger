@@ -7,14 +7,19 @@ Tracks every gram of plastic from raw material to dispatch.
 
 - apps/api: NestJS + @nestjs/cqrs, PostgreSQL, Prisma ORM, BullMQ + Redis
 - apps/tablet: React Native (Android) + WatermelonDB, offline-first
-- apps/office: React (Vite)
+- apps/office: React + Vite, React Router, TanStack Query, Tailwind +
+  shadcn/ui, react-hook-form + zod, openapi-fetch
 - packages/shared: shared types and helpers
 - pnpm workspaces, Docker for Postgres and Redis
 
 ## Commands
 
 - pnpm db:up / pnpm db:down
-- pnpm dev:api
+- pnpm dev (shared, API and office) / pnpm dev:api / pnpm dev:office
+- pnpm db:seed:demo (demo data for an empty dev database; needs
+  NODE_ENV=development and DEMO_PASSWORD in apps/api/.env)
+- pnpm api:client (regenerates apps/api/openapi.json and the office client)
+- pnpm lint / pnpm typecheck / pnpm format:check
 - pnpm --filter api test
 - pnpm --filter api exec prisma migrate dev --name <change>
 - pnpm --filter api exec prisma migrate deploy
@@ -77,6 +82,23 @@ Write code the way an experienced engineer on a small team would.
 - Never read, print or edit .env files. Use .env.example for new variables.
 - Rate-limit auth and sync endpoints.
 - No new dependency without saying why, and prefer well-maintained ones.
+
+## Office app
+
+- Call the API only through `api` in apps/office/src/api/client.ts. Its
+  types come from apps/api/openapi.json: after changing an endpoint, run
+  pnpm api:client and commit both generated files. CI checks both.
+- Every endpoint a screen reads needs an @ApiOkResponse zod schema in the
+  API, and its e2e test parses a real response with that schema.
+- The office reaches the API under /api (the Vite proxy in development, the
+  reverse proxy in production). The refresh cookie is scoped to /api/auth.
+- Tokens never go in localStorage or sessionStorage. The access token lives
+  in memory; the refresh token is an httpOnly cookie the page never reads.
+- All text on screen comes from src/i18n/en.ts, so Bangla can be added.
+- Weights, money and dates only through src/lib/format.ts: kg with three
+  decimals, ৳ with lakh grouping, timestamps in Asia/Dhaka.
+- Show the API's error message to the user (unwrap + ErrorMessage).
+- /docs (Swagger UI) runs only with NODE_ENV=development.
 
 ## Testing
 

@@ -3,3 +3,6 @@ coverage
 pnpm-lock.yaml
 apps/api/src/generated
 .claude
+# Generated: `pnpm api:client` writes these.
+apps/api/openapi.json
+apps/office/src/api/schema.d.ts

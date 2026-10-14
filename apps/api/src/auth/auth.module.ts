@@ -18,6 +18,7 @@ import { RefreshSessionHandler } from './commands/refresh-session.js';
 import { ResetUserPasswordHandler } from './commands/reset-user-password.js';
 import { SeedOwnerCommand, SeedOwnerHandler } from './commands/seed-owner.js';
 import { normalizeLogin } from './domain/login.js';
+import { RefreshCookie } from './infra/refresh-cookie.js';
 import { TokenService } from './infra/tokens.js';
 import { GetCurrentUserHandler } from './queries/get-current-user.js';
 import { GetUserHandler } from './queries/get-user.js';
@@ -51,6 +52,7 @@ function byIpAndLogin(request: Record<string, any>): string {
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },
     TokenService,
+    RefreshCookie,
     LogInHandler,
     RefreshSessionHandler,
     LogOutHandler,
