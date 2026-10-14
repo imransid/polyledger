@@ -30,6 +30,7 @@ export function snapshotOf(order: SalesOrderView): OrderSnapshot {
     deliveryDate: order.deliveryDate,
     customerPo: order.customerPo,
     notes: order.notes,
+    overDeliveryBasisPoints: order.overDeliveryBasisPoints,
     lines: order.lines.map(({ productId, pieces, unitPricePoisha }) => ({
       productId,
       pieces,

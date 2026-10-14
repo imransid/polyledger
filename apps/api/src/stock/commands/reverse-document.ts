@@ -18,6 +18,8 @@ const REVERSED_ELSEWHERE: Partial<Record<StockDocumentKind, string>> = {
   WASTE: 'Waste entries are reversed from their job card',
   GRINDING: 'Grinding batches are reversed from scrap',
   SCRAP_SALE: 'Scrap sales are reversed from scrap',
+  DISPATCH: 'Delivery challans are reversed from dispatch',
+  CUSTOMER_RETURN: 'Customer returns are reversed from dispatch',
 };
 
 export class ReverseDocumentCommand extends Command<StockDocumentView> {

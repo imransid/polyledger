@@ -38,6 +38,9 @@ model User {
   wasteEntries       WasteEntry[]
   grindingBatches    GrindingBatch[]
   scrapSales         ScrapSale[]
+  recordedChallans   DeliveryChallan[]  @relation("ChallanRecorder")
+  gatePassedChallans DeliveryChallan[]  @relation("ChallanGatePasser")
+  customerReturns    CustomerReturn[]
 
   @@map("users")
 }
@@ -250,6 +253,8 @@ enum StockDocumentKind {
   GRINDING
   SCRAP_SALE
   SCRAP_TRANSFER
+  DISPATCH
+  CUSTOMER_RETURN
 }
 
 enum StockItemType {
@@ -357,22 +362,26 @@ enum SalesOrderStatus {
 }
 
 model SalesOrder {
-  id           String           @id @default(uuid(7)) @db.Uuid
-  number       String           @unique
-  customerId   String           @map("customer_id") @db.Uuid
-  orderDate    DateTime         @map("order_date") @db.Date
-  deliveryDate DateTime         @map("delivery_date") @db.Date
-  customerPo   String?          @map("customer_po")
-  notes        String?
-  status       SalesOrderStatus @default(DRAFT)
-  cancelReason String?          @map("cancel_reason")
-  createdById  String           @map("created_by_id") @db.Uuid
-  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
-  customer     Customer         @relation(fields: [customerId], references: [id])
-  createdBy    User             @relation(fields: [createdById], references: [id])
-  lines        SalesOrderLine[]
-  jobCards     JobCard[]
+  id                      String           @id @default(uuid(7)) @db.Uuid
+  number                  String           @unique
+  customerId              String           @map("customer_id") @db.Uuid
+  orderDate               DateTime         @map("order_date") @db.Date
+  deliveryDate            DateTime         @map("delivery_date") @db.Date
+  customerPo              String?          @map("customer_po")
+  notes                   String?
+  status                  SalesOrderStatus @default(DRAFT)
+  cancelReason            String?          @map("cancel_reason")
+  /// Extra pieces each line may ship beyond its order: 2% is 200.
+  overDeliveryBasisPoints Int              @default(0) @map("over_delivery_basis_points")
+  /// Set when the order was closed before everything was delivered.
+  shortCloseReason        String?          @map("short_close_reason")
+  createdById             String           @map("created_by_id") @db.Uuid
+  createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt               DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  customer                Customer         @relation(fields: [customerId], references: [id])
+  createdBy               User             @relation(fields: [createdById], references: [id])
+  lines                   SalesOrderLine[]
+  jobCards                JobCard[]
 
   @@index([status, deliveryDate])
   @@index([customerId])
@@ -386,6 +395,10 @@ model SalesOrderLine {
   pieces          Int
   /// BDT x 100.
   unitPricePoisha Int?       @map("unit_price_poisha")
+  /// Delivered and not sent back for replacement.
+  deliveredPieces Int        @default(0) @map("delivered_pieces")
+  /// Every piece sent back, whether replaced or credited.
+  returnedPieces  Int        @default(0) @map("returned_pieces")
   order           SalesOrder @relation(fields: [orderId], references: [id])
   product         Product    @relation(fields: [productId], references: [id])
 
@@ -578,4 +591,98 @@ model ScrapSaleLine {
 
   @@id([saleId, lineNo])
   @@map("scrap_sale_lines")
+}
+
+enum GatePassStatus {
+  PENDING
+  PASSED
+}
+
+/// Goods out of a finished goods store against one sales order. Its number
+/// is its stock document number (DC-000001).
+model DeliveryChallan {
+  id              String                @id @default(uuid(7)) @db.Uuid
+  number          String                @unique
+  stockDocumentId String                @unique @map("stock_document_id") @db.Uuid
+  orderId         String                @map("order_id") @db.Uuid
+  customerId      String                @map("customer_id") @db.Uuid
+  fromLocationId  String                @map("from_location_id") @db.Uuid
+  vehicleNumber   String                @map("vehicle_number")
+  driverName      String                @map("driver_name")
+  driverPhone     String                @map("driver_phone")
+  deliveryAddress String                @map("delivery_address")
+  notes           String?
+  dispatchedOn    DateTime              @map("dispatched_on") @db.Date
+  gatePassStatus  GatePassStatus        @default(PENDING) @map("gate_pass_status")
+  gatePassedAt    DateTime?             @map("gate_passed_at") @db.Timestamptz(3)
+  gatePassedById  String?               @map("gate_passed_by_id") @db.Uuid
+  reversedAt      DateTime?             @map("reversed_at") @db.Timestamptz(3)
+  recordedById    String                @map("recorded_by_id") @db.Uuid
+  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  recordedBy      User                  @relation("ChallanRecorder", fields: [recordedById], references: [id])
+  gatePassedBy    User?                 @relation("ChallanGatePasser", fields: [gatePassedById], references: [id])
+  lines           DeliveryChallanLine[]
+  returns         CustomerReturn[]
+
+  @@index([orderId])
+  @@index([customerId, dispatchedOn])
+  @@index([gatePassStatus])
+  @@map("delivery_challans")
+}
+
+model DeliveryChallanLine {
+  challanId      String          @map("challan_id") @db.Uuid
+  productId      String          @map("product_id") @db.Uuid
+  pieces         Int
+  /// Sent back by customer returns that are not reversed.
+  returnedPieces Int             @default(0) @map("returned_pieces")
+  challan        DeliveryChallan @relation(fields: [challanId], references: [id])
+
+  @@id([challanId, productId])
+  @@map("delivery_challan_lines")
+}
+
+enum ReturnReason {
+  DAMAGED
+  WRONG_ITEM
+  QUALITY
+}
+
+/// REPLACE: the customer still wants the pieces, so they count as not
+/// delivered again. CREDIT: the customer is credited and the order is done.
+enum ReturnSettlement {
+  REPLACE
+  CREDIT
+}
+
+/// Pieces back from a customer against a challan that passed the gate. Its
+/// number is its stock document number (CRN-000001).
+model CustomerReturn {
+  id              String               @id @default(uuid(7)) @db.Uuid
+  number          String               @unique
+  stockDocumentId String               @unique @map("stock_document_id") @db.Uuid
+  challanId       String               @map("challan_id") @db.Uuid
+  toLocationId    String               @map("to_location_id") @db.Uuid
+  reason          ReturnReason
+  settlement      ReturnSettlement
+  returnedOn      DateTime             @map("returned_on") @db.Date
+  reversedAt      DateTime?            @map("reversed_at") @db.Timestamptz(3)
+  recordedById    String               @map("recorded_by_id") @db.Uuid
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  challan         DeliveryChallan      @relation(fields: [challanId], references: [id])
+  recordedBy      User                 @relation(fields: [recordedById], references: [id])
+  lines           CustomerReturnLine[]
+
+  @@index([challanId])
+  @@map("customer_returns")
+}
+
+model CustomerReturnLine {
+  returnId  String         @map("return_id") @db.Uuid
+  productId String         @map("product_id") @db.Uuid
+  pieces    Int
+  return    CustomerReturn @relation(fields: [returnId], references: [id])
+
+  @@id([returnId, productId])
+  @@map("customer_return_lines")
 }

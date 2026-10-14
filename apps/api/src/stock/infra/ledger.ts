@@ -32,6 +32,8 @@ const NUMBER_PREFIX: Record<StockDocumentKind, string> = {
   GRINDING: 'GRD',
   SCRAP_SALE: 'SCR',
   SCRAP_TRANSFER: 'SCT',
+  DISPATCH: 'DC',
+  CUSTOMER_RETURN: 'CRN',
 };
 
 export interface Movement {

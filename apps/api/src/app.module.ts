@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { envSchema } from './config/env.js';
 import { CustomersModule } from './customers/customers.module.js';
 import { DatabaseModule } from './database/database.module.js';
+import { DispatchModule } from './dispatch/dispatch.module.js';
 import { FormulasModule } from './formulas/formulas.module.js';
 import { HealthController } from './health/health.controller.js';
 import { MachinesModule } from './machines/machines.module.js';
@@ -41,6 +42,7 @@ import { SuppliersModule } from './suppliers/suppliers.module.js';
     OrdersModule,
     ProductionModule,
     ScrapModule,
+    DispatchModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -27,6 +27,7 @@ export interface NewSalesOrder {
   deliveryDate: string;
   customerPo: string | null;
   notes: string | null;
+  overDeliveryBasisPoints: number;
   lines: OrderLine[];
 }
 
@@ -72,6 +73,7 @@ export class CreateSalesOrderHandler implements ICommandHandler<CreateSalesOrder
                 deliveryDate: fromDateString(order.deliveryDate),
                 customerPo: order.customerPo,
                 notes: order.notes,
+                overDeliveryBasisPoints: order.overDeliveryBasisPoints,
                 createdById: actorId,
                 lines: {
                   create: order.lines.map((line, index) => ({

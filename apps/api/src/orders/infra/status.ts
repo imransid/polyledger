@@ -10,9 +10,9 @@ export async function moveOrder(
   tx: Prisma.TransactionClient,
   orderId: string,
   action: OrderAction,
-  details: { cancelReason?: string } = {},
+  details: { cancelReason?: string; shortCloseReason?: string } = {},
 ): Promise<SalesOrderView> {
-  const { from, to, done } = TRANSITIONS[action];
+  const { from, to, done, event } = TRANSITIONS[action];
   const { count } = await tx.salesOrder.updateMany({
     where: { id: orderId, status: { in: from } },
     data: { ...details, status: to },
@@ -33,7 +33,7 @@ export async function moveOrder(
       include: withLines,
     }),
   );
-  await recordEvent(tx, `sales_order.${to.toLowerCase()}`, {
+  await recordEvent(tx, `sales_order.${event}`, {
     orderId,
     number: order.number,
     ...details,

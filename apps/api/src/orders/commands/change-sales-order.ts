@@ -88,6 +88,7 @@ export class ChangeSalesOrderHandler implements ICommandHandler<ChangeSalesOrder
               deliveryDate: fromDateString(after.deliveryDate),
               customerPo: after.customerPo,
               notes: after.notes,
+              overDeliveryBasisPoints: after.overDeliveryBasisPoints,
             },
           });
           if (changes.lines) {
@@ -140,6 +141,8 @@ export class ChangeSalesOrderHandler implements ICommandHandler<ChangeSalesOrder
       return {
         ...before,
         deliveryDate: changes.deliveryDate ?? before.deliveryDate,
+        overDeliveryBasisPoints:
+          changes.overDeliveryBasisPoints ?? before.overDeliveryBasisPoints,
         lines: before.lines.map((line) => ({
           ...line,
           pieces: pieces.get(line.productId)!,

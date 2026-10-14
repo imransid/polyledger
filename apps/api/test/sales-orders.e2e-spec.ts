@@ -180,13 +180,14 @@ describe('sales orders', () => {
       });
     });
 
-    it('lets a confirmed order change only its pieces and delivery date, recording old and new', async () => {
+    it('lets a confirmed order change only its pieces, delivery date and tolerance, recording old and new', async () => {
       const so = await confirmed();
 
       const changed = await owner
         .patch(`/sales-orders/${so.id}`)
         .send({
           deliveryDate: '2026-11-05',
+          overDeliveryBasisPoints: 200,
           lines: [{ productId: cap, pieces: 12_000, unitPricePoisha: 150 }],
         })
         .expect(200);
@@ -194,6 +195,7 @@ describe('sales orders', () => {
       expect(changed.body).toMatchObject({
         status: 'CONFIRMED',
         deliveryDate: '2026-11-05',
+        overDeliveryBasisPoints: 200,
         lines: [{ productId: cap, pieces: 12_000 }],
       });
       const events = await salesEvents();
@@ -203,6 +205,7 @@ describe('sales orders', () => {
           number: so.number,
           changes: {
             deliveryDate: { from: '2026-10-30', to: '2026-11-05' },
+            overDeliveryBasisPoints: { from: 0, to: 200 },
             lines: {
               from: [{ productId: cap, pieces: 10_000 }],
               to: [{ productId: cap, pieces: 12_000 }],
@@ -227,7 +230,7 @@ describe('sales orders', () => {
           .send(refused)
           .expect(409);
         expect(response.body.message).toBe(
-          'A confirmed order can only change its pieces and delivery date',
+          'A confirmed order can only change its pieces, delivery date and over-delivery tolerance',
         );
       }
     });
@@ -248,20 +251,27 @@ describe('sales orders', () => {
   });
 
   describe('status flow', () => {
-    it('goes from draft to completed, with an event at each step', async () => {
+    it('goes from draft to closed short, with an event at each step', async () => {
       const so = await createOrder();
 
       await act(so.id, 'confirm').expect(200);
       await act(so.id, 'start-production').expect(200);
-      const done = await act(so.id, 'complete').expect(200);
+      await act(so.id, 'close-short', { reason: ' ' }).expect(400);
+      const done = await act(so.id, 'close-short', {
+        reason: 'Customer needs no more',
+      }).expect(200);
 
-      expect(done.body.status).toBe('COMPLETED');
+      expect(done.body).toMatchObject({
+        status: 'COMPLETED',
+        shortCloseReason: 'Customer needs no more',
+      });
       expect((await salesEvents()).map((e) => e.type)).toEqual([
         'sales_order.created',
         'sales_order.confirmed',
         'sales_order.in_production',
-        'sales_order.completed',
+        'sales_order.closed_short',
       ]);
+      await act(so.id, 'complete').expect(404);
     });
 
     it('refuses steps out of order', async () => {
@@ -271,10 +281,14 @@ describe('sales orders', () => {
       expect(early.body.message).toBe(
         `${so.number} is DRAFT; only CONFIRMED orders can be put into production`,
       );
-      await act(so.id, 'complete').expect(409);
+      const short = { reason: 'Stop' };
+      await act(so.id, 'close-short', short).expect(409);
       await act(so.id, 'confirm').expect(200);
       await act(so.id, 'confirm').expect(409);
-      await act(so.id, 'complete').expect(409);
+      const notStarted = await act(so.id, 'close-short', short).expect(409);
+      expect(notStarted.body.message).toBe(
+        `${so.number} is CONFIRMED; only IN_PRODUCTION orders can be closed short`,
+      );
     });
 
     it('cancels only before production starts, and needs a reason', async () => {
@@ -461,7 +475,7 @@ describe('sales orders', () => {
       deliveryDate: '2020-01-10',
     });
     await act(shipped.id, 'start-production').expect(200);
-    await act(shipped.id, 'complete').expect(200);
+    await act(shipped.id, 'close-short', { reason: 'Done' }).expect(200);
     const dropped = await createOrder({
       orderDate: '2020-01-01',
       deliveryDate: '2020-01-10',

@@ -10,21 +10,28 @@ export interface OrderSnapshot {
   deliveryDate: string;
   customerPo: string | null;
   notes: string | null;
+  overDeliveryBasisPoints: number;
   lines: OrderLine[];
 }
 
 export type OrderChanges = Partial<OrderSnapshot>;
 
 export const CONFIRMED_CHANGE_RULE =
-  'A confirmed order can only change its pieces and delivery date';
+  'A confirmed order can only change its pieces, delivery date and over-delivery tolerance';
 
 // A confirmed order is a promise to the customer: it keeps its number and
-// products, and only the pieces and the delivery date may move.
+// products, and only the pieces, the delivery date and the tolerance may
+// move. Nothing has shipped yet: the first challan starts production.
 export function isAllowedOnConfirmed(
   before: OrderSnapshot,
   changes: OrderChanges,
 ): boolean {
-  const { deliveryDate: _deliveryDate, lines, ...others } = changes;
+  const {
+    deliveryDate: _deliveryDate,
+    overDeliveryBasisPoints: _overDeliveryBasisPoints,
+    lines,
+    ...others
+  } = changes;
   if (Object.keys(others).length > 0) {
     return false;
   }

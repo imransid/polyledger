@@ -23,12 +23,13 @@ import { INT_MAX } from '../common/quantities.js';
 import { SalesOrderStatus } from '../generated/prisma/client.js';
 import { CancelSalesOrderCommand } from './commands/cancel-sales-order.js';
 import { ChangeSalesOrderCommand } from './commands/change-sales-order.js';
-import { CompleteSalesOrderCommand } from './commands/complete-sales-order.js';
+import { CloseOrderShortCommand } from './commands/close-order-short.js';
 import { ConfirmSalesOrderCommand } from './commands/confirm-sales-order.js';
 import { CreateSalesOrderCommand } from './commands/create-sales-order.js';
 import { StartProductionCommand } from './commands/start-production.js';
 import { GetMaterialCheckQuery } from './queries/get-material-check.js';
 import { GetMaterialShortagesQuery } from './queries/get-material-shortages.js';
+import { GetOrderDeliveryQuery } from './queries/get-order-delivery.js';
 import { GetSalesOrderQuery } from './queries/get-sales-order.js';
 import { ListSalesOrdersQuery } from './queries/list-sales-orders.js';
 import { SALES_EDITORS, SALES_READERS } from './roles.js';
@@ -55,6 +56,13 @@ const linesSchema = z
     'Each product can appear only once',
   );
 
+const overDeliveryBasisPoints = z
+  .number()
+  .int()
+  .min(0)
+  .max(10_000)
+  .describe('Extra pieces each line may ship beyond its order: 2% is 200');
+
 const text = (max: number) =>
   z.string().trim().min(1).max(max).nullable().default(null);
 
@@ -65,6 +73,7 @@ const orderBody = z
     deliveryDate: z.iso.date(),
     customerPo: text(50),
     notes: text(1000),
+    overDeliveryBasisPoints: overDeliveryBasisPoints.default(0),
     lines: linesSchema,
   })
   .refine((order) => order.deliveryDate >= order.orderDate, {
@@ -79,6 +88,7 @@ const orderChanges = z
     deliveryDate: z.iso.date(),
     customerPo: z.string().trim().min(1).max(50).nullable(),
     notes: z.string().trim().min(1).max(1000).nullable(),
+    overDeliveryBasisPoints,
     lines: linesSchema,
   })
   .partial()
@@ -95,7 +105,7 @@ const orderList = listQuery.extend({
     .optional(),
 });
 
-const cancelBody = z.object({ reason: z.string().trim().min(1).max(300) });
+const reasonBody = z.object({ reason: z.string().trim().min(1).max(300) });
 
 @Roles(...SALES_READERS)
 @Controller('sales-orders')
@@ -119,6 +129,15 @@ export class SalesOrdersController {
   async get(@Param('id', ParseUUIDPipe) id: string) {
     return found(
       await this.queryBus.execute(new GetSalesOrderQuery(id)),
+      'Sales order',
+    );
+  }
+
+  /** Per line: ordered, delivered, returned and still to deliver. */
+  @Get(':id/delivery')
+  async delivery(@Param('id', ParseUUIDPipe) id: string) {
+    return found(
+      await this.queryBus.execute(new GetOrderDeliveryQuery(id)),
       'Sales order',
     );
   }
@@ -182,16 +201,18 @@ export class SalesOrdersController {
     );
   }
 
+  /** Orders complete when dispatch delivers every line; this ends one early. */
   @Roles(...SALES_EDITORS)
-  @Post(':id/complete')
+  @Post(':id/close-short')
   @HttpCode(200)
-  complete(
+  closeShort(
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
     @Param('id', ParseUUIDPipe) id: string,
+    @Body({ schema: reasonBody }) body: z.infer<typeof reasonBody>,
   ) {
     return this.commandBus.execute(
-      new CompleteSalesOrderCommand(user.id, id, idempotencyKey),
+      new CloseOrderShortCommand(user.id, id, body.reason, idempotencyKey),
     );
   }
 
@@ -202,7 +223,7 @@ export class SalesOrdersController {
     @CurrentUser() user: AuthUser,
     @IdempotencyKey() idempotencyKey: string | undefined,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body({ schema: cancelBody }) body: z.infer<typeof cancelBody>,
+    @Body({ schema: reasonBody }) body: z.infer<typeof reasonBody>,
   ) {
     return this.commandBus.execute(
       new CancelSalesOrderCommand(user.id, id, body.reason, idempotencyKey),

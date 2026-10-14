@@ -32,3 +32,11 @@ export async function assertProductsActive(
     }
   }
 }
+
+export async function productCodes(
+  queryBus: QueryBus,
+  productIds: string[],
+): Promise<Map<string, string>> {
+  const products = await queryBus.execute(new GetProductsQuery(productIds));
+  return new Map(products.map((product) => [product.id, product.code]));
+}
