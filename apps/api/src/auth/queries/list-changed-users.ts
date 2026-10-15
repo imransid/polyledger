@@ -7,6 +7,7 @@ export interface ChangedUser {
   name: string;
   role: Role;
   isActive: boolean;
+  hasPin: boolean;
 }
 
 /** Users changed at or after `since`, active or not; every user without it. */
@@ -20,10 +21,20 @@ export class ListChangedUsersQuery extends Query<ChangedUser[]> {
 export class ListChangedUsersHandler implements IQueryHandler<ListChangedUsersQuery> {
   constructor(private readonly prisma: PrismaService) {}
 
-  execute({ since }: ListChangedUsersQuery): Promise<ChangedUser[]> {
-    return this.prisma.user.findMany({
+  async execute({ since }: ListChangedUsersQuery): Promise<ChangedUser[]> {
+    const users = await this.prisma.user.findMany({
       where: since ? { updatedAt: { gte: since } } : {},
-      select: { id: true, name: true, role: true, isActive: true },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        isActive: true,
+        pinHash: true,
+      },
     });
+    return users.map(({ pinHash, ...user }) => ({
+      ...user,
+      hasPin: pinHash !== null,
+    }));
   }
 }

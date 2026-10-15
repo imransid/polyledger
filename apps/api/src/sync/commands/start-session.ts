@@ -22,11 +22,11 @@ export interface DeviceSessionView {
   expiresAt: Date;
 }
 
-/** Someone signing in on a tablet with their login and PIN. */
+/** Someone signing in on a tablet: picked from its list, with their PIN. */
 export class StartSessionCommand extends Command<DeviceSessionView> {
   constructor(
     readonly device: PairedDevice,
-    readonly login: string,
+    readonly userId: string,
     readonly pin: string,
   ) {
     super();
@@ -42,11 +42,11 @@ export class StartSessionHandler implements ICommandHandler<StartSessionCommand>
 
   async execute({
     device,
-    login,
+    userId,
     pin,
   }: StartSessionCommand): Promise<DeviceSessionView> {
     const user = await this.commandBus.execute(
-      new CheckPinCommand(device.id, login, pin),
+      new CheckPinCommand(device.id, userId, pin),
     );
     if (!TABLET_RECORDERS.includes(user.role)) {
       throw new ForbiddenException(`A ${user.role} does not record on tablets`);

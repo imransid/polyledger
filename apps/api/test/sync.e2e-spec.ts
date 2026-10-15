@@ -86,8 +86,8 @@ describe('tablet sync', () => {
   };
   const setPin = (userId: string, pin: string, api = manager) =>
     api.put(`/users/${userId}/pin`).send({ pin });
-  const signIn = (api: Tablet, login: string, pin: string) =>
-    api.post('/sync/sessions').send({ login, pin });
+  const signIn = (api: Tablet, userId: string, pin: string) =>
+    api.post('/sync/sessions').send({ userId, pin });
 
   const card = async (machineId: string, mouldId: string, floorId = floor) => {
     const planned = await created('/job-cards', {
@@ -331,9 +331,7 @@ describe('tablet sync', () => {
       const { api } = await pairedTablet();
       const other = await pairedTablet();
 
-      const session = (
-        await signIn(api, 'operator@example.com', '2580').expect(201)
-      ).body;
+      const session = (await signIn(api, operatorId, '2580').expect(201)).body;
       sessionResponse.strict().parse(session);
       expect(session.user).toMatchObject({ id: operatorId, role: 'OPERATOR' });
       expect(
@@ -342,17 +340,18 @@ describe('tablet sync', () => {
 
       for (let attempt = 1; attempt <= 4; attempt += 1) {
         expect(
-          (await signIn(api, 'operator@example.com', '9999').expect(401)).body
-            .message,
-        ).toBe('Wrong login or PIN');
+          (await signIn(api, operatorId, '9999').expect(401)).body.message,
+        ).toBe('Wrong PIN');
       }
       expect(
-        (await signIn(api, 'operator@example.com', '9999').expect(423)).body
-          .message,
-      ).toBe('Too many wrong PINs on this tablet; try again in 15 min');
-      await signIn(api, 'operator@example.com', '2580').expect(423);
+        (await signIn(api, operatorId, '9999').expect(423)).body,
+      ).toMatchObject({
+        message: 'Too many wrong PINs on this tablet; try again in 15 min',
+        retryAfterMinutes: 15,
+      });
+      await signIn(api, operatorId, '2580').expect(423);
       // Locked on that tablet only.
-      await signIn(other.api, 'operator@example.com', '2580').expect(201);
+      await signIn(other.api, operatorId, '2580').expect(201);
       expect(
         (await manager.get('/users/pins').expect(200)).body.find(
           (user: { id: string }) => user.id === operatorId,
@@ -360,9 +359,15 @@ describe('tablet sync', () => {
       ).not.toBeNull();
 
       await setPin(operatorId, '1357').expect(204);
-      await signIn(api, 'operator@example.com', '1357').expect(201);
-      await signIn(api, 'nobody@example.com', '1357').expect(401);
-      await signIn(api, 'supervisor@example.com', '1357').expect(401);
+      await signIn(api, operatorId, '1357').expect(201);
+      const supervisorId = (
+        await prisma.user.findUniqueOrThrow({
+          where: { email: 'supervisor@example.com' },
+        })
+      ).id;
+      await signIn(api, randomUUID(), '1357').expect(401);
+      // Without a PIN of their own.
+      await signIn(api, supervisorId, '1357').expect(401);
     });
   });
 
@@ -387,6 +392,13 @@ describe('tablet sync', () => {
         piecesPerCarton: 1_000,
       });
       await owner.post(`/products/${retired}/deactivate`).expect(200);
+      const supervisorId = (
+        await prisma.user.findUniqueOrThrow({
+          where: { email: 'supervisor@example.com' },
+        })
+      ).id;
+      await setPin(operatorId, '2580').expect(204);
+      await setPin(supervisorId, '1357').expect(204);
       const { api } = await pairedTablet();
       const ids = (table: { created: { id: string }[] }) =>
         table.created.map((row) => row.id);
@@ -404,6 +416,18 @@ describe('tablet sync', () => {
       });
       expect(ids(first.changes.products)).toEqual([cap]);
       expect(ids(first.changes.operators)).toEqual([operatorId]);
+      // Everyone who records on tablets and has a PIN; the owner and
+      // manager have none here.
+      expect(
+        first.changes.tablet_users.created.sort(
+          (a: { name: string }, b: { name: string }) =>
+            a.name.localeCompare(b.name),
+        ),
+      ).toEqual([
+        { id: operatorId, name: 'OPERATOR user', role: 'OPERATOR' },
+        { id: supervisorId, name: 'SUPERVISOR user', role: 'SUPERVISOR' },
+      ]);
+      expect(first.changes.rejections.created).toEqual([]);
       expect(ids(first.changes.raw_materials)).toEqual([regrind]);
       expect(ids(first.changes.locations)).toEqual([scrapYard]);
       expect(ids(first.changes.machines).sort()).toEqual(
@@ -442,6 +466,11 @@ describe('tablet sync', () => {
         },
       ]);
       expect(next.changes.operators.deleted).toEqual([operatorId]);
+      expect(next.changes.tablet_users).toEqual({
+        created: [],
+        updated: [],
+        deleted: [operatorId],
+      });
       expect(
         next.changes.raw_materials.updated.map((m: { id: string }) => m.id),
       ).toEqual([newRegrind]);
@@ -464,9 +493,8 @@ describe('tablet sync', () => {
     beforeEach(async () => {
       await setPin(operatorId, '2580').expect(204);
       ({ api } = await pairedTablet());
-      sessionId = (
-        await signIn(api, 'operator@example.com', '2580').expect(201)
-      ).body.sessionId;
+      sessionId = (await signIn(api, operatorId, '2580').expect(201)).body
+        .sessionId;
       running = await card(machine1, mould1);
       await issue(running.id);
     });
@@ -619,9 +647,8 @@ describe('tablet sync', () => {
         (
           await prisma.deviceSession.update({
             where: {
-              id: (
-                await signIn(api, 'operator@example.com', '2580').expect(201)
-              ).body.sessionId,
+              id: (await signIn(api, operatorId, '2580').expect(201)).body
+                .sessionId,
             },
             data: {
               startedAt: new Date(Date.now() - startedHoursAgo * HOUR),
@@ -677,6 +704,47 @@ describe('tablet sync', () => {
       expect(result.rejected[0].reason).toBe(
         'OPERATOR user can no longer record on tablets',
       );
+    });
+
+    it('sends a tablet its refused records until a supervisor reviews them', async () => {
+      const closed = await card(machine2, mould2);
+      await owner.post(`/job-cards/${closed.id}/close`).expect(200);
+      const refused = entry(sessionId, closed.id);
+      const before = (await api.get('/sync/pull').expect(200)).body;
+      await pushEntries(api, [refused, entry(sessionId, running.id)]);
+
+      const after = (
+        await api.get(`/sync/pull?lastPulledAt=${before.timestamp}`).expect(200)
+      ).body;
+
+      expect(after.changes.rejections).toEqual({
+        created: [],
+        updated: [
+          {
+            id: refused.id,
+            kind: 'PRODUCTION_ENTRY',
+            job_card_id: closed.id,
+            job_card_number: closed.number,
+            reason: `${closed.number} is CLOSED; material and goods move only while it is RELEASED or RUNNING`,
+            recorded_at: refused.recorded_at,
+          },
+        ],
+        deleted: [],
+      });
+      const other = await pairedTablet();
+      expect(
+        (await other.api.get('/sync/pull').expect(200)).body.changes.rejections
+          .created,
+      ).toEqual([]);
+
+      await supervisor
+        .post(`/sync/rejections/${refused.id}/dismiss`)
+        .send({ note: 'Made on the wrong card' })
+        .expect(204);
+      const reviewed = (
+        await api.get(`/sync/pull?lastPulledAt=${after.timestamp}`).expect(200)
+      ).body;
+      expect(reviewed.changes.rejections.deleted).toEqual([refused.id]);
     });
 
     it('lets a supervisor resolve or dismiss a refused record, once', async () => {

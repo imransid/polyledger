@@ -6,7 +6,6 @@ import {
 import { Command, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Role } from '../../generated/prisma/client.js';
-import { normalizeLogin } from '../domain/login.js';
 import { verifyPassword } from '../domain/password.js';
 import { PIN_ATTEMPTS, PIN_LOCK_MS, PIN_ROLES } from '../domain/pin.js';
 
@@ -16,11 +15,11 @@ export interface PinUser {
   role: Role;
 }
 
-/** Signing in on a tablet: the user behind a login and PIN, on one device. */
+/** Signing in on a tablet: someone picked from its list, with their PIN. */
 export class CheckPinCommand extends Command<PinUser> {
   constructor(
     readonly deviceId: string,
-    readonly login: string,
+    readonly userId: string,
     readonly pin: string,
   ) {
     super();
@@ -33,8 +32,15 @@ export class CheckPinCommand extends Command<PinUser> {
 export class CheckPinHandler implements ICommandHandler<CheckPinCommand> {
   constructor(private readonly prisma: PrismaService) {}
 
-  async execute({ deviceId, login, pin }: CheckPinCommand): Promise<PinUser> {
-    const user = await this.findUser(login);
+  async execute({ deviceId, userId, pin }: CheckPinCommand): Promise<PinUser> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id: userId,
+        isActive: true,
+        role: { in: PIN_ROLES },
+        pinHash: { not: null },
+      },
+    });
     if (!user) {
       // As slow as a real check, so the answer doesn't reveal who exists.
       await verifyPassword(undefined, pin);
@@ -51,21 +57,6 @@ export class CheckPinHandler implements ICommandHandler<CheckPinCommand> {
     }
     await this.prisma.pinAttempt.deleteMany({ where: key.deviceId_userId });
     return { id: user.id, name: user.name, role: user.role };
-  }
-
-  private async findUser(login: string) {
-    const normalized = normalizeLogin(login);
-    if (!normalized) {
-      return null;
-    }
-    return this.prisma.user.findFirst({
-      where: {
-        OR: [{ email: normalized }, { phone: normalized }],
-        isActive: true,
-        role: { in: PIN_ROLES },
-        pinHash: { not: null },
-      },
-    });
   }
 
   private async countFailure(key: {
@@ -89,13 +80,18 @@ export class CheckPinHandler implements ICommandHandler<CheckPinCommand> {
 }
 
 function wrongPin() {
-  return new UnauthorizedException('Wrong login or PIN');
+  return new UnauthorizedException('Wrong PIN');
 }
 
+// The minutes go along on their own so a tablet can say it in Bangla.
 function locked(until: Date) {
   const minutes = Math.ceil((until.getTime() - Date.now()) / 60_000);
   return new HttpException(
-    `Too many wrong PINs on this tablet; try again in ${minutes} min`,
+    {
+      statusCode: HttpStatus.LOCKED,
+      message: `Too many wrong PINs on this tablet; try again in ${minutes} min`,
+      retryAfterMinutes: minutes,
+    },
     HttpStatus.LOCKED,
   );
 }

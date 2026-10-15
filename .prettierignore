@@ -6,3 +6,6 @@ apps/api/src/generated
 # Generated: `pnpm api:client` writes these.
 apps/api/openapi.json
 apps/office/src/api/schema.d.ts
+apps/tablet/src/api/schema.d.ts
+apps/tablet/android
+apps/tablet/.expo

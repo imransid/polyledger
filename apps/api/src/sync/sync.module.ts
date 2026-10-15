@@ -8,6 +8,7 @@ import { RevokeDeviceHandler } from './commands/revoke-device.js';
 import { StartSessionHandler } from './commands/start-session.js';
 import { DeviceGuard } from './device.guard.js';
 import { DevicesController } from './devices.controller.js';
+import { ListChangedRejectionsHandler } from './queries/list-changed-rejections.js';
 import { ListDevicesHandler } from './queries/list-devices.js';
 import { ListRejectionsHandler } from './queries/list-rejections.js';
 import { PullChangesHandler } from './queries/pull-changes.js';
@@ -28,6 +29,7 @@ import { SyncController } from './sync.controller.js';
     ListDevicesHandler,
     PullChangesHandler,
     ListRejectionsHandler,
+    ListChangedRejectionsHandler,
   ],
 })
 export class SyncModule {}

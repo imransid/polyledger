@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isTrivialPin, PIN_PATTERN } from './pin.js';
+import { isTrivialPin, PIN_MAX_LENGTH, PIN_PATTERN } from './pin.js';
 
 describe('tablet PINs', () => {
   it('takes four to six digits', () => {
@@ -8,6 +8,11 @@ describe('tablet PINs', () => {
     expect(PIN_PATTERN.test('258')).toBe(false);
     expect(PIN_PATTERN.test('2580461')).toBe(false);
     expect(PIN_PATTERN.test('25a0')).toBe(false);
+  });
+
+  it('stops at PIN_MAX_LENGTH digits', () => {
+    expect(PIN_PATTERN.test('2'.repeat(PIN_MAX_LENGTH))).toBe(true);
+    expect(PIN_PATTERN.test('2'.repeat(PIN_MAX_LENGTH + 1))).toBe(false);
   });
 
   it.each([

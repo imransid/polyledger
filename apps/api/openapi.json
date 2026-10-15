@@ -18925,10 +18925,11 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "login": {
+                  "userId": {
                     "type": "string",
-                    "minLength": 1,
-                    "maxLength": 254
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "description": "Picked from the tablet_users the tablet pulled"
                   },
                   "pin": {
                     "type": "string",
@@ -18936,7 +18937,7 @@
                   }
                 },
                 "required": [
-                  "login",
+                  "userId",
                   "pin"
                 ]
               }
@@ -19576,6 +19577,91 @@
                           ],
                           "additionalProperties": false
                         },
+                        "tablet_users": {
+                          "type": "object",
+                          "properties": {
+                            "created": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "role": {
+                                    "type": "string",
+                                    "enum": [
+                                      "OWNER",
+                                      "MANAGER",
+                                      "STOREKEEPER",
+                                      "SUPERVISOR",
+                                      "OPERATOR",
+                                      "GUARD"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name",
+                                  "role"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "updated": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "role": {
+                                    "type": "string",
+                                    "enum": [
+                                      "OWNER",
+                                      "MANAGER",
+                                      "STOREKEEPER",
+                                      "SUPERVISOR",
+                                      "OPERATOR",
+                                      "GUARD"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name",
+                                  "role"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "deleted": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              }
+                            }
+                          },
+                          "required": [
+                            "created",
+                            "updated",
+                            "deleted"
+                          ],
+                          "additionalProperties": false
+                        },
                         "raw_materials": {
                           "type": "object",
                           "properties": {
@@ -19713,6 +19799,121 @@
                             "deleted"
                           ],
                           "additionalProperties": false
+                        },
+                        "rejections": {
+                          "type": "object",
+                          "properties": {
+                            "created": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PRODUCTION_ENTRY",
+                                      "WASTE_ENTRY"
+                                    ]
+                                  },
+                                  "job_card_id": {
+                                    "nullable": true,
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  "job_card_number": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "reason": {
+                                    "type": "string"
+                                  },
+                                  "recorded_at": {
+                                    "nullable": true,
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "kind",
+                                  "job_card_id",
+                                  "job_card_number",
+                                  "reason",
+                                  "recorded_at"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "updated": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PRODUCTION_ENTRY",
+                                      "WASTE_ENTRY"
+                                    ]
+                                  },
+                                  "job_card_id": {
+                                    "nullable": true,
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  "job_card_number": {
+                                    "nullable": true,
+                                    "type": "string"
+                                  },
+                                  "reason": {
+                                    "type": "string"
+                                  },
+                                  "recorded_at": {
+                                    "nullable": true,
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "kind",
+                                  "job_card_id",
+                                  "job_card_number",
+                                  "reason",
+                                  "recorded_at"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "deleted": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              }
+                            }
+                          },
+                          "required": [
+                            "created",
+                            "updated",
+                            "deleted"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "required": [
@@ -19721,8 +19922,10 @@
                         "moulds",
                         "machines",
                         "operators",
+                        "tablet_users",
                         "raw_materials",
-                        "locations"
+                        "locations",
+                        "rejections"
                       ],
                       "additionalProperties": false
                     },

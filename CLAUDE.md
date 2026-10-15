@@ -6,7 +6,11 @@ Tracks every gram of plastic from raw material to dispatch.
 ## Stack
 
 - apps/api: NestJS + @nestjs/cqrs, PostgreSQL, Prisma ORM, BullMQ + Redis
-- apps/tablet: React Native (Android) + WatermelonDB, offline-first
+- apps/tablet: Expo (React Native, Android) + expo-sqlite with our own
+  small sync, offline-first. Not WatermelonDB: 0.28 doesn't build
+  on the New Architecture that React Native 0.82+ requires, or under pnpm,
+  without patches; our sync is simple (pull is read-only, tablets only
+  create records).
 - apps/office: React + Vite, React Router, TanStack Query, Tailwind +
   shadcn/ui, react-hook-form + zod, openapi-fetch
 - packages/shared: shared types and helpers
@@ -16,9 +20,13 @@ Tracks every gram of plastic from raw material to dispatch.
 
 - pnpm db:up / pnpm db:down
 - pnpm dev (shared, API and office) / pnpm dev:api / pnpm dev:office
+- pnpm dev:tablet (Metro) / pnpm --filter @polyledger/tablet android
+  (builds and installs on a device or emulator; set EXPO_PUBLIC_API_URL
+  as in apps/tablet/.env.example)
 - pnpm db:seed:demo (demo data for an empty dev database; needs
   NODE_ENV=development and DEMO_PASSWORD in apps/api/.env)
-- pnpm api:client (regenerates apps/api/openapi.json and the office client)
+- pnpm api:client (regenerates apps/api/openapi.json and the office and
+  tablet clients)
 - pnpm lint / pnpm typecheck / pnpm format:check
 - pnpm --filter api test
 - pnpm --filter api exec prisma migrate dev --name <change>
@@ -105,6 +113,22 @@ Write code the way an experienced engineer on a small team would.
 - Component tests fake the API with MSW and never reach the network: the
   server starts in src/test/setup.ts before any module creates the client.
 - /docs (Swagger UI) runs only with NODE_ENV=development.
+
+## Tablet app
+
+- Call the API only through createApi in apps/tablet/src/api/client.ts,
+  typed from apps/api/openapi.json (pnpm api:client regenerates it).
+- Every local write goes through db.write: one at a time, all or nothing.
+  Table and column names in SQL come from constants; values are bound.
+- Pull only fills the floor's lists; push sends only created production
+  and waste entries. A refused record is kept for "Needs supervisor".
+- The device token lives only in expo-secure-store and in memory.
+- All text comes from src/i18n/bn.ts and en.ts; Bangla is the default.
+  Numbers and times only through src/lib/format.ts (Latin digits with
+  lakh grouping, times in Asia/Dhaka).
+- Touch targets at least 56 dp (TOUCH in src/ui/theme.ts).
+- Tests run on Node's SQLite and a fake fetch (src/test/), never the
+  network.
 
 ## Testing
 

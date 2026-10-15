@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "Polyledger",
+    "slug": "polyledger-tablet",
+    "version": "0.1.0",
+    "orientation": "default",
+    "android": {
+      "package": "com.polyledger.tablet",
+      "allowBackup": false
+    },
+    "plugins": ["expo-secure-store"]
+  }
+}

@@ -90,8 +90,25 @@ export const pullResponse = z.object({
       z.object({ ...named, status: z.enum(MachineStatus) }),
     ),
     operators: tableChanges(z.object({ id: z.uuid(), name: z.string() })),
+    /** Who can sign in here: they pick their name, then type their PIN. */
+    tablet_users: tableChanges(
+      z.object({ id: z.uuid(), name: z.string(), role: z.enum(Role) }),
+    ),
     raw_materials: tableChanges(z.object(named)),
     locations: tableChanges(z.object(named)),
+    /** This tablet's records still waiting for a supervisor. */
+    rejections: tableChanges(
+      z.object({
+        id: z.uuid(),
+        kind: z.enum(SyncRecordKind),
+        job_card_id: z.uuid().nullable(),
+        /** Sent along: a closed job card is no longer on the tablet. */
+        job_card_number: z.string().nullable(),
+        reason: z.string(),
+        /** The tablet clock in milliseconds; null if it couldn't be read. */
+        recorded_at: whole.nullable(),
+      }),
+    ),
   }),
   /** The next pull's lastPulledAt, in milliseconds. */
   timestamp: whole,

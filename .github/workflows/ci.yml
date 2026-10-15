@@ -35,12 +35,12 @@ jobs:
 
       - run: pnpm build
 
-      # The office client must match the committed spec; the API tests check
-      # the spec against the code.
-      - run: pnpm --filter @polyledger/office api:generate && git diff --exit-code apps/office/src/api/schema.d.ts
+      # The office and tablet clients must match the committed spec; the API
+      # tests check the spec against the code.
+      - run: pnpm --filter @polyledger/office api:generate && pnpm --filter @polyledger/tablet api:generate && git diff --exit-code apps/office/src/api/schema.d.ts apps/tablet/src/api/schema.d.ts
 
-      # One package at a time (shared, office, api): run side by side, the
-      # browser tests and the Postgres tests starve each other on a busy
-      # runner and time out. The API tests start Postgres through
+      # One package at a time (shared, office, tablet, api): run side by
+      # side, the browser tests and the Postgres tests starve each other on a
+      # busy runner and time out. The API tests start Postgres through
       # Testcontainers on the runner's Docker.
       - run: pnpm test

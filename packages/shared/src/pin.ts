@@ -1,5 +1,6 @@
 /** A tablet PIN: four to six digits. */
 export const PIN_PATTERN = /^\d{4,6}$/;
+export const PIN_MAX_LENGTH = 6;
 
 // Easy to guess by watching a hand on the screen: one digit repeated, or a
 // straight run up or down. Runs don't wrap: 7890 is allowed.

@@ -10,6 +10,7 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiCreatedResponse, ApiHeader, ApiOkResponse } from '@nestjs/swagger';
 import { SkipThrottle, Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { PIN_MAX_LENGTH } from '@polyledger/shared';
 import { z } from 'zod';
 import {
   type PushedChanges,
@@ -21,8 +22,8 @@ import { PullChangesQuery } from './queries/pull-changes.js';
 import { pullResponse, pushResponse, sessionResponse } from './responses.js';
 
 const sessionBody = z.object({
-  login: z.string().trim().min(1).max(254),
-  pin: z.string().max(6),
+  userId: z.uuid().describe('Picked from the tablet_users the tablet pulled'),
+  pin: z.string().max(PIN_MAX_LENGTH),
 });
 
 const pullQuery = z.object({
@@ -59,9 +60,9 @@ export class SyncController {
     private readonly queryBus: QueryBus,
   ) {}
 
-  /** Signing in with a login and PIN; wrong PINs lock the user out of this tablet. */
+  /** Signing in with a PIN; wrong PINs lock the user out of this tablet. */
   // The lock-out counts wrong PINs per user and tablet; this only slows a
-  // tablet trying many logins.
+  // tablet trying many users.
   @UseGuards(ThrottlerGuard)
   @Throttle({ perIp: { limit: 30, ttl: 60_000 } })
   @SkipThrottle({ perLogin: true })
@@ -72,7 +73,7 @@ export class SyncController {
     @Body({ schema: sessionBody }) body: z.infer<typeof sessionBody>,
   ) {
     return this.commandBus.execute(
-      new StartSessionCommand(device, body.login, body.pin),
+      new StartSessionCommand(device, body.userId, body.pin),
     );
   }
 

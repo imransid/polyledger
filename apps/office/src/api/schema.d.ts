@@ -8041,7 +8041,11 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    login: string;
+                    /**
+                     * Format: uuid
+                     * @description Picked from the tablet_users the tablet pulled
+                     */
+                    userId: string;
                     pin: string;
                 };
             };
@@ -8209,6 +8213,23 @@ export interface operations {
                                 }[];
                                 deleted: string[];
                             };
+                            tablet_users: {
+                                created: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    name: string;
+                                    /** @enum {string} */
+                                    role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR" | "GUARD";
+                                }[];
+                                updated: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    name: string;
+                                    /** @enum {string} */
+                                    role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR" | "GUARD";
+                                }[];
+                                deleted: string[];
+                            };
                             raw_materials: {
                                 created: {
                                     /** Format: uuid */
@@ -8236,6 +8257,31 @@ export interface operations {
                                     id: string;
                                     code: string;
                                     name: string;
+                                }[];
+                                deleted: string[];
+                            };
+                            rejections: {
+                                created: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    /** @enum {string} */
+                                    kind: "PRODUCTION_ENTRY" | "WASTE_ENTRY";
+                                    /** Format: uuid */
+                                    job_card_id: string | null;
+                                    job_card_number: string | null;
+                                    reason: string;
+                                    recorded_at: number | null;
+                                }[];
+                                updated: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    /** @enum {string} */
+                                    kind: "PRODUCTION_ENTRY" | "WASTE_ENTRY";
+                                    /** Format: uuid */
+                                    job_card_id: string | null;
+                                    job_card_number: string | null;
+                                    reason: string;
+                                    recorded_at: number | null;
                                 }[];
                                 deleted: string[];
                             };

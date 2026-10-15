@@ -13,6 +13,8 @@ import { ListChangedProductsQuery } from '../../products/queries/list-changed-pr
 import { ListChangedLocationsQuery } from '../../stock/queries/list-changed-locations.js';
 import type { PairedDevice } from '../device.guard.js';
 import { changesOf } from '../domain/pull.js';
+import { TABLET_RECORDERS } from '../roles.js';
+import { ListChangedRejectionsQuery } from './list-changed-rejections.js';
 
 /** WatermelonDB's pull: what changed since the last one, and when this one began. */
 export class PullChangesQuery extends Query<{
@@ -28,8 +30,9 @@ export class PullChangesQuery extends Query<{
   }
 }
 
-// Only what the floor needs: its own job cards in work, and the short
-// lists a shift or waste entry picks from.
+// Only what the floor needs: its own job cards in work, the short lists a
+// shift or waste entry picks from, who can sign in, and its own records
+// still waiting for a supervisor.
 @QueryHandler(PullChangesQuery)
 export class PullChangesHandler implements IQueryHandler<PullChangesQuery> {
   constructor(private readonly queryBus: QueryBus) {}
@@ -40,18 +43,27 @@ export class PullChangesHandler implements IQueryHandler<PullChangesQuery> {
     const timestamp = Date.now();
     const since = lastPulledAt === null ? null : new Date(lastPulledAt);
     const first = since === null;
-    const [cards, products, moulds, machines, users, materials, locations] =
-      await Promise.all([
-        this.queryBus.execute(
-          new ListChangedJobCardsQuery(device.floorLocationId, since),
-        ),
-        this.queryBus.execute(new ListChangedProductsQuery(since)),
-        this.queryBus.execute(new ListChangedMouldsQuery(since)),
-        this.queryBus.execute(new ListChangedMachinesQuery(since)),
-        this.queryBus.execute(new ListChangedUsersQuery(since)),
-        this.queryBus.execute(new ListChangedRawMaterialsQuery(since)),
-        this.queryBus.execute(new ListChangedLocationsQuery(since)),
-      ]);
+    const [
+      cards,
+      products,
+      moulds,
+      machines,
+      users,
+      materials,
+      locations,
+      rejections,
+    ] = await Promise.all([
+      this.queryBus.execute(
+        new ListChangedJobCardsQuery(device.floorLocationId, since),
+      ),
+      this.queryBus.execute(new ListChangedProductsQuery(since)),
+      this.queryBus.execute(new ListChangedMouldsQuery(since)),
+      this.queryBus.execute(new ListChangedMachinesQuery(since)),
+      this.queryBus.execute(new ListChangedUsersQuery(since)),
+      this.queryBus.execute(new ListChangedRawMaterialsQuery(since)),
+      this.queryBus.execute(new ListChangedLocationsQuery(since)),
+      this.queryBus.execute(new ListChangedRejectionsQuery(device.id, since)),
+    ]);
 
     return {
       changes: {
@@ -115,6 +127,15 @@ export class PullChangesHandler implements IQueryHandler<PullChangesQuery> {
           (user) => user.isActive && user.role === 'OPERATOR',
           (user) => ({ id: user.id, name: user.name }),
         ),
+        tablet_users: changesOf(
+          users,
+          first,
+          (user) =>
+            user.isActive &&
+            user.hasPin &&
+            TABLET_RECORDERS.includes(user.role),
+          (user) => ({ id: user.id, name: user.name, role: user.role }),
+        ),
         raw_materials: changesOf(
           materials,
           first,
@@ -133,6 +154,19 @@ export class PullChangesHandler implements IQueryHandler<PullChangesQuery> {
             id: location.id,
             code: location.code,
             name: location.name,
+          }),
+        ),
+        rejections: changesOf(
+          rejections,
+          first,
+          (rejection) => rejection.status === 'REJECTED',
+          (rejection) => ({
+            id: rejection.id,
+            kind: rejection.kind,
+            job_card_id: rejection.jobCardId,
+            job_card_number: rejection.jobCardNumber,
+            reason: rejection.reason,
+            recorded_at: rejection.deviceRecordedAt?.getTime() ?? null,
           }),
         ),
       },
