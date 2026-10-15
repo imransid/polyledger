@@ -47,6 +47,14 @@ export const PRODUCTION_READERS: Role[] = [
   'STOREKEEPER',
 ];
 
+// The API's tablet role lists.
+/** Register, re-pair and revoke tablets. */
+export const DEVICE_ADMINS: Role[] = ['OWNER'];
+/** Set tablet PINs. */
+export const PIN_SETTERS: Role[] = ['OWNER', 'MANAGER'];
+/** Review the tablet records the server refused. */
+export const RECORD_REVIEWERS: Role[] = ['OWNER', 'MANAGER', 'SUPERVISOR'];
+
 /** The home page dashboard. */
 export const DASHBOARD_READERS: Role[] = ['OWNER', 'MANAGER'];
 

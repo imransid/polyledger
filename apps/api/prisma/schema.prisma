@@ -26,6 +26,8 @@ model User {
   email              String?            @unique
   phone              String?            @unique
   passwordHash       String             @map("password_hash")
+  /// A 4-6 digit PIN for tablets, hashed like the password.
+  pinHash            String?            @map("pin_hash")
   role               Role
   isActive           Boolean            @default(true) @map("is_active")
   createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -44,6 +46,11 @@ model User {
   gatePassedChallans DeliveryChallan[]  @relation("ChallanGatePasser")
   customerReturns    CustomerReturn[]
   companySettings    CompanySettings[]
+  devicesRegistered  Device[]
+  deviceSessions     DeviceSession[]
+  pinAttempts        PinAttempt[]
+  syncedRecords      SyncedRecord[]     @relation("SyncRecorder")
+  reviewedRecords    SyncedRecord[]     @relation("SyncReviewer")
 
   @@map("users")
 }
@@ -238,6 +245,7 @@ model Location {
   balances      StockBalance[]
   ledgerEntries StockLedgerEntry[]
   jobCards      JobCard[]
+  devices       Device[]
 
   @@map("locations")
 }
@@ -708,4 +716,96 @@ model CompanySettings {
   updatedBy   User     @relation(fields: [updatedById], references: [id])
 
   @@map("company_settings")
+}
+
+/// A tablet on a production floor. Its token and pairing code are kept only
+/// as SHA-256 hashes.
+model Device {
+  id               String          @id @default(uuid(7)) @db.Uuid
+  name             String
+  floorLocationId  String          @map("floor_location_id") @db.Uuid
+  tokenHash        String?         @unique @map("token_hash")
+  pairingCodeHash  String?         @unique @map("pairing_code_hash")
+  pairingExpiresAt DateTime?       @map("pairing_expires_at") @db.Timestamptz(3)
+  pairedAt         DateTime?       @map("paired_at") @db.Timestamptz(3)
+  lastSeenAt       DateTime?       @map("last_seen_at") @db.Timestamptz(3)
+  revokedAt        DateTime?       @map("revoked_at") @db.Timestamptz(3)
+  createdById      String          @map("created_by_id") @db.Uuid
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  floorLocation    Location        @relation(fields: [floorLocationId], references: [id])
+  createdBy        User            @relation(fields: [createdById], references: [id])
+  sessions         DeviceSession[]
+  pinAttempts      PinAttempt[]
+  syncedRecords    SyncedRecord[]
+
+  @@map("devices")
+}
+
+/// A user signed in on a tablet with their PIN.
+model DeviceSession {
+  id            String         @id @default(uuid(7)) @db.Uuid
+  deviceId      String         @map("device_id") @db.Uuid
+  userId        String         @map("user_id") @db.Uuid
+  startedAt     DateTime       @default(now()) @map("started_at") @db.Timestamptz(3)
+  expiresAt     DateTime       @map("expires_at") @db.Timestamptz(3)
+  device        Device         @relation(fields: [deviceId], references: [id])
+  user          User           @relation(fields: [userId], references: [id])
+  syncedRecords SyncedRecord[]
+
+  @@index([deviceId])
+  @@map("device_sessions")
+}
+
+/// Wrong PINs in a row for one user on one tablet.
+model PinAttempt {
+  deviceId    String    @map("device_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  failures    Int       @default(0)
+  lockedUntil DateTime? @map("locked_until") @db.Timestamptz(3)
+  device      Device    @relation(fields: [deviceId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@id([deviceId, userId])
+  @@map("pin_attempts")
+}
+
+enum SyncRecordKind {
+  PRODUCTION_ENTRY
+  WASTE_ENTRY
+}
+
+/// REJECTED waits for a supervisor, who resolves or dismisses it.
+enum SyncRecordStatus {
+  ACCEPTED
+  REJECTED
+  RESOLVED
+  DISMISSED
+}
+
+/// Every record a tablet pushed, under the id the tablet gave it, so pushing
+/// it again gets the same answer. An accepted record's id is its entry's id.
+model SyncedRecord {
+  id               String           @id @db.Uuid
+  kind             SyncRecordKind
+  deviceId         String           @map("device_id") @db.Uuid
+  sessionId        String?          @map("session_id") @db.Uuid
+  recordedById     String?          @map("recorded_by_id") @db.Uuid
+  jobCardId        String?          @map("job_card_id") @db.Uuid
+  /// As the tablet sent it.
+  payload          Json
+  /// The tablet's clock, for reference; stock posts at server time.
+  deviceRecordedAt DateTime?        @map("device_recorded_at") @db.Timestamptz(3)
+  receivedAt       DateTime         @default(now()) @map("received_at") @db.Timestamptz(3)
+  status           SyncRecordStatus
+  reason           String?
+  reviewedById     String?          @map("reviewed_by_id") @db.Uuid
+  reviewedAt       DateTime?        @map("reviewed_at") @db.Timestamptz(3)
+  reviewNote       String?          @map("review_note")
+  device           Device           @relation(fields: [deviceId], references: [id])
+  session          DeviceSession?   @relation(fields: [sessionId], references: [id])
+  recordedBy       User?            @relation("SyncRecorder", fields: [recordedById], references: [id])
+  reviewedBy       User?            @relation("SyncReviewer", fields: [reviewedById], references: [id])
+
+  @@index([status, receivedAt])
+  @@map("synced_records")
 }

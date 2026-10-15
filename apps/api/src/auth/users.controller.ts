@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -24,6 +25,7 @@ import { CreateUserCommand } from './commands/create-user.js';
 import { DeactivateUserCommand } from './commands/deactivate-user.js';
 import { ReactivateUserCommand } from './commands/reactivate-user.js';
 import { ResetUserPasswordCommand } from './commands/reset-user-password.js';
+import { SetPinCommand } from './commands/set-pin.js';
 import {
   type AuthUser,
   CurrentUser,
@@ -32,9 +34,11 @@ import {
 } from './decorators.js';
 import { emailSchema } from './domain/login.js';
 import { passwordSchema } from './domain/password.js';
+import { pinSchema } from './domain/pin.js';
 import { ListOperatorsQuery } from './queries/list-operators.js';
+import { ListPinsQuery } from './queries/list-pins.js';
 import { ListUsersQuery } from './queries/list-users.js';
-import { operatorsResponse, userResponse } from './responses.js';
+import { operatorsResponse, pinsResponse, userResponse } from './responses.js';
 
 const createUserBody = z
   .object({
@@ -51,6 +55,8 @@ const createUserBody = z
 const changeRoleBody = z.object({ role: z.enum(Role) });
 
 const resetPasswordBody = z.object({ newPassword: passwordSchema });
+
+const pinBody = z.object({ pin: pinSchema });
 
 const userList = listQuery.extend({ active: activeFilter });
 
@@ -74,6 +80,30 @@ export class UsersController {
   @ApiOkResponse({ standardSchema: operatorsResponse })
   operators() {
     return this.queryBus.execute(new ListOperatorsQuery());
+  }
+
+  /** Who may sign in on a tablet, and who is locked out of one. */
+  @Roles(Role.OWNER, Role.MANAGER)
+  @Get('pins')
+  @ApiOkResponse({ standardSchema: pinsResponse })
+  pins() {
+    return this.queryBus.execute(new ListPinsQuery());
+  }
+
+  /** Also lifts any tablet lock-out. */
+  @Roles(Role.OWNER, Role.MANAGER)
+  @Put(':id/pin')
+  @HttpCode(204)
+  @ApiNoContentResponse()
+  async setPin(
+    @CurrentUser() actor: AuthUser,
+    @IdempotencyKey() idempotencyKey: string | undefined,
+    @Param('id', ParseUUIDPipe) userId: string,
+    @Body({ schema: pinBody }) body: z.infer<typeof pinBody>,
+  ) {
+    await this.commandBus.execute(
+      new SetPinCommand(actor.id, userId, body.pin, idempotencyKey),
+    );
   }
 
   @Post()

@@ -20,6 +20,7 @@ import { ScrapModule } from './scrap/scrap.module.js';
 import { SettingsModule } from './settings/settings.module.js';
 import { StockModule } from './stock/stock.module.js';
 import { SuppliersModule } from './suppliers/suppliers.module.js';
+import { SyncModule } from './sync/sync.module.js';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { SuppliersModule } from './suppliers/suppliers.module.js';
     DispatchModule,
     SettingsModule,
     DashboardModule,
+    SyncModule,
   ],
   controllers: [HealthController],
   providers: [

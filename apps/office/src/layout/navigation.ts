@@ -7,11 +7,12 @@ import {
   type LucideIcon,
   Recycle,
   Settings,
+  Tablet,
   Truck,
   Users,
 } from 'lucide-react';
 import type { Role } from '@/api/types';
-import { GATE_KEEPERS } from '@/auth/permissions';
+import { GATE_KEEPERS, RECORD_REVIEWERS } from '@/auth/permissions';
 import { text } from '@/i18n';
 
 export interface NavItem {
@@ -55,6 +56,12 @@ export const NAVIGATION: NavItem[] = [
     roles: OFFICE_STAFF,
   },
   { path: '/users', label: text.nav.users, icon: Users, roles: ['OWNER'] },
+  {
+    path: '/tablets',
+    label: text.nav.tablets,
+    icon: Tablet,
+    roles: RECORD_REVIEWERS,
+  },
   {
     path: '/settings',
     label: text.nav.settings,

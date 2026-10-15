@@ -665,6 +665,27 @@ describe('production', () => {
       expect((await balance(cap, floor)).pieces).toBe(500);
     });
 
+    it('closes a card only once it has production, unless it never had material', async () => {
+      const unused = await releasedCard();
+      await act(unused.id, 'close').expect(200);
+
+      const card = await runningCard({ machineId: machine2, mouldId: mould2 });
+      await issueEnough(card.id);
+      const refused = `${card.number} has material issued but no production yet`;
+      expect((await act(card.id, 'close').expect(409)).body.message).toBe(
+        refused,
+      );
+      const reversed = (await record(card.id).expect(201)).body;
+      await reverseEntry(card.id, reversed.id).expect(201);
+      expect((await act(card.id, 'close').expect(409)).body.message).toBe(
+        refused,
+      );
+
+      await record(card.id).expect(201);
+      await handOver(card.id, 1_000).expect(201);
+      await act(card.id, 'close').expect(200);
+    });
+
     it('closes only once the good pieces have left the floor, with a summary', async () => {
       const card = await runningCard();
       await issueEnough(card.id);
@@ -857,10 +878,8 @@ describe('production', () => {
       entryResponse
         .strict()
         .parse((await reverseEntry(card.id, entry.id).expect(201)).body);
-      await giveBack(card.id, [
-        [pp, '20'],
-        [mb, '0.5'],
-      ]).expect(201);
+      await record(card.id).expect(201);
+      await handOver(card.id, 1_000).expect(201);
       closedJobCardResponse
         .strict()
         .parse((await act(card.id, 'close').expect(200)).body);

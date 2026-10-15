@@ -3,6 +3,7 @@ import { CreateMachineHandler } from './commands/create-machine.js';
 import { UpdateMachineHandler } from './commands/update-machine.js';
 import { MachinesController } from './machines.controller.js';
 import { GetMachineHandler } from './queries/get-machine.js';
+import { ListChangedMachinesHandler } from './queries/list-changed-machines.js';
 import { ListMachinesHandler } from './queries/list-machines.js';
 
 @Module({
@@ -12,6 +13,7 @@ import { ListMachinesHandler } from './queries/list-machines.js';
     UpdateMachineHandler,
     ListMachinesHandler,
     GetMachineHandler,
+    ListChangedMachinesHandler,
   ],
 })
 export class MachinesModule {}

@@ -41,6 +41,8 @@ export class RecordWasteCommand extends Command<WasteEntryView> {
     readonly jobCardId: string,
     readonly entry: NewWasteEntry,
     readonly idempotencyKey: string | undefined,
+    /** A tablet names its own records. */
+    readonly entryId?: string,
   ) {
     super();
   }
@@ -61,13 +63,14 @@ export class RecordWasteHandler implements ICommandHandler<RecordWasteCommand> {
     jobCardId,
     entry,
     idempotencyKey,
+    entryId,
   }: RecordWasteCommand): Promise<WasteEntryView> {
     try {
       return await this.prisma.$transaction((tx) =>
         withIdempotencyKey(
           tx,
           { actorId, key: idempotencyKey, command: 'RecordWaste' },
-          () => this.record(tx, actorId, jobCardId, entry),
+          () => this.record(tx, actorId, jobCardId, entry, entryId),
         ),
       );
     } catch (error) {
@@ -85,7 +88,18 @@ export class RecordWasteHandler implements ICommandHandler<RecordWasteCommand> {
     actorId: string,
     jobCardId: string,
     entry: NewWasteEntry,
+    entryId: string | undefined,
   ): Promise<WasteEntryView> {
+    // A tablet that never heard back sends the same record again.
+    const earlier =
+      entryId &&
+      (await tx.wasteEntry.findUnique({
+        where: { id: entryId },
+        include: { lines: true },
+      }));
+    if (earlier) {
+      return toWasteEntryView(earlier);
+    }
     const card = await lockJobCard(tx, jobCardId);
     assertInWork(card);
     const shiftDate = fromDateString(entry.shiftDate);
@@ -108,6 +122,7 @@ export class RecordWasteHandler implements ICommandHandler<RecordWasteCommand> {
     );
     const created = await tx.wasteEntry.create({
       data: {
+        id: entryId,
         jobCardId,
         shiftDate,
         shift: entry.shift,

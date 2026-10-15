@@ -43,6 +43,9 @@ const ScrapArea = lazy(() =>
 const UsersArea = lazy(() =>
   import('@/users/area').then((area) => ({ default: area.UsersArea })),
 );
+const TabletsArea = lazy(() =>
+  import('@/tablets/area').then((area) => ({ default: area.TabletsArea })),
+);
 const SettingsArea = lazy(() =>
   import('@/settings/area').then((area) => ({ default: area.SettingsArea })),
 );
@@ -56,6 +59,7 @@ const AREAS: Record<string, ReactNode> = {
   '/scrap': <ScrapArea />,
   '/master-data': <MasterDataArea />,
   '/users': <UsersArea />,
+  '/tablets': <TabletsArea />,
   '/settings': <SettingsArea />,
 };
 

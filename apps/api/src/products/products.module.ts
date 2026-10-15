@@ -4,6 +4,7 @@ import { UpdateProductHandler } from './commands/update-product.js';
 import { ProductsController } from './products.controller.js';
 import { GetProductHandler } from './queries/get-product.js';
 import { GetProductsHandler } from './queries/get-products.js';
+import { ListChangedProductsHandler } from './queries/list-changed-products.js';
 import { ListProductsHandler } from './queries/list-products.js';
 
 @Module({
@@ -14,6 +15,7 @@ import { ListProductsHandler } from './queries/list-products.js';
     ListProductsHandler,
     GetProductHandler,
     GetProductsHandler,
+    ListChangedProductsHandler,
   ],
 })
 export class ProductsModule {}

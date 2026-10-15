@@ -39,5 +39,8 @@ jobs:
       # the spec against the code.
       - run: pnpm --filter @polyledger/office api:generate && git diff --exit-code apps/office/src/api/schema.d.ts
 
-      # Integration tests start Postgres through Testcontainers on the runner's Docker.
+      # One package at a time (shared, office, api): run side by side, the
+      # browser tests and the Postgres tests starve each other on a busy
+      # runner and time out. The API tests start Postgres through
+      # Testcontainers on the runner's Docker.
       - run: pnpm test

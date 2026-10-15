@@ -132,6 +132,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/pins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["UsersController_pins"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{id}/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["UsersController_setPin"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/{id}/role": {
         parameters: {
             query?: never;
@@ -1524,6 +1556,166 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["DevicesController_list"];
+        put?: never;
+        post: operations["DevicesController_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/devices/{id}/pairing-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DevicesController_newPairingCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/devices/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DevicesController_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/devices/pair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DevicesController_pair"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["SyncController_startSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/pull": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SyncController_pull"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/push": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["SyncController_push"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/rejections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["RejectionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/rejections/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RejectionsController_resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/rejections/{id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RejectionsController_dismiss"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1811,6 +2003,61 @@ export interface operations {
                         name: string;
                     }[];
                 };
+            };
+        };
+    };
+    UsersController_pins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        name: string;
+                        /** @enum {string} */
+                        role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR" | "GUARD";
+                        email: string | null;
+                        phone: string | null;
+                        hasPin: boolean;
+                        /** Format: date-time */
+                        lockedUntil: string | null;
+                    }[];
+                };
+            };
+        };
+    };
+    UsersController_setPin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    pin: string;
+                };
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -7576,6 +7823,601 @@ export interface operations {
                         waitedTooLong: boolean;
                     }[];
                 };
+            };
+        };
+    };
+    DevicesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        name: string;
+                        /** Format: uuid */
+                        floorLocationId: string;
+                        /** @enum {string} */
+                        status: "PAIRING" | "CODE_EXPIRED" | "PAIRED" | "REVOKED";
+                        /** Format: date-time */
+                        pairingExpiresAt: string | null;
+                        /** Format: date-time */
+                        pairedAt: string | null;
+                        /** Format: date-time */
+                        lastSeenAt: string | null;
+                        /** Format: date-time */
+                        revokedAt: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                    }[];
+                };
+            };
+        };
+    };
+    DevicesController_register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    /**
+                     * Format: uuid
+                     * @description The production floor it stands on
+                     */
+                    floorLocationId: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        device: {
+                            /** Format: uuid */
+                            id: string;
+                            name: string;
+                            /** Format: uuid */
+                            floorLocationId: string;
+                            /** @enum {string} */
+                            status: "PAIRING" | "CODE_EXPIRED" | "PAIRED" | "REVOKED";
+                            /** Format: date-time */
+                            pairingExpiresAt: string | null;
+                            /** Format: date-time */
+                            pairedAt: string | null;
+                            /** Format: date-time */
+                            lastSeenAt: string | null;
+                            /** Format: date-time */
+                            revokedAt: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        };
+                        pairingCode: string;
+                    };
+                };
+            };
+        };
+    };
+    DevicesController_newPairingCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        device: {
+                            /** Format: uuid */
+                            id: string;
+                            name: string;
+                            /** Format: uuid */
+                            floorLocationId: string;
+                            /** @enum {string} */
+                            status: "PAIRING" | "CODE_EXPIRED" | "PAIRED" | "REVOKED";
+                            /** Format: date-time */
+                            pairingExpiresAt: string | null;
+                            /** Format: date-time */
+                            pairedAt: string | null;
+                            /** Format: date-time */
+                            lastSeenAt: string | null;
+                            /** Format: date-time */
+                            revokedAt: string | null;
+                            /** Format: date-time */
+                            createdAt: string;
+                        };
+                        pairingCode: string;
+                    };
+                };
+            };
+        };
+    };
+    DevicesController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        name: string;
+                        /** Format: uuid */
+                        floorLocationId: string;
+                        /** @enum {string} */
+                        status: "PAIRING" | "CODE_EXPIRED" | "PAIRED" | "REVOKED";
+                        /** Format: date-time */
+                        pairingExpiresAt: string | null;
+                        /** Format: date-time */
+                        pairedAt: string | null;
+                        /** Format: date-time */
+                        lastSeenAt: string | null;
+                        /** Format: date-time */
+                        revokedAt: string | null;
+                        /** Format: date-time */
+                        createdAt: string;
+                    };
+                };
+            };
+        };
+    };
+    DevicesController_pair: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    code: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        deviceToken: string;
+                        device: {
+                            /** Format: uuid */
+                            id: string;
+                            name: string;
+                            /** Format: uuid */
+                            floorLocationId: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    SyncController_startSession: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Device-Token": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    login: string;
+                    pin: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        sessionId: string;
+                        user: {
+                            /** Format: uuid */
+                            id: string;
+                            name: string;
+                            /** @enum {string} */
+                            role: "OWNER" | "MANAGER" | "STOREKEEPER" | "SUPERVISOR" | "OPERATOR" | "GUARD";
+                        };
+                        /** Format: date-time */
+                        startedAt: string;
+                        /** Format: date-time */
+                        expiresAt: string;
+                    };
+                };
+            };
+        };
+    };
+    SyncController_pull: {
+        parameters: {
+            query?: {
+                /** @description The timestamp from the last pull; leave out the first time */
+                lastPulledAt?: string;
+            };
+            header: {
+                "X-Device-Token": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        changes: {
+                            job_cards: {
+                                created: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    number: string;
+                                    /** Format: uuid */
+                                    product_id: string;
+                                    /** Format: uuid */
+                                    mould_id: string;
+                                    /** Format: uuid */
+                                    machine_id: string;
+                                    piece_weight_mg: number;
+                                    cavities: number;
+                                    runner_weight_mg: number;
+                                    planned_pieces: number;
+                                    /** Format: date */
+                                    planned_start_date: string;
+                                    /** @enum {string} */
+                                    status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
+                                }[];
+                                updated: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    number: string;
+                                    /** Format: uuid */
+                                    product_id: string;
+                                    /** Format: uuid */
+                                    mould_id: string;
+                                    /** Format: uuid */
+                                    machine_id: string;
+                                    piece_weight_mg: number;
+                                    cavities: number;
+                                    runner_weight_mg: number;
+                                    planned_pieces: number;
+                                    /** Format: date */
+                                    planned_start_date: string;
+                                    /** @enum {string} */
+                                    status: "PLANNED" | "RELEASED" | "RUNNING" | "CLOSED" | "CANCELLED";
+                                }[];
+                                deleted: string[];
+                            };
+                            products: {
+                                created: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    code: string;
+                                    name: string;
+                                    piece_weight_mg: number;
+                                    colour: string;
+                                }[];
+                                updated: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    code: string;
+                                    name: string;
+                                    piece_weight_mg: number;
+                                    colour: string;
+                                }[];
+                                deleted: string[];
+                            };
+                            moulds: {
+                                created: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    code: string;
+                                    name: string;
+                                    /** Format: uuid */
+                                    product_id: string;
+                                    cavities: number;
+                                    /** @enum {string} */
+                                    status: "ACTIVE" | "REPAIR" | "RETIRED";
+                                }[];
+                                updated: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    code: string;
+                                    name: string;
+                                    /** Format: uuid */
+                                    product_id: string;
+                                    cavities: number;
+                                    /** @enum {string} */
+                                    status: "ACTIVE" | "REPAIR" | "RETIRED";
+                                }[];
+                                deleted: string[];
+                            };
+                            machines: {
+                                created: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    code: string;
+                                    name: string;
+                                    /** @enum {string} */
+                                    status: "ACTIVE" | "REPAIR" | "RETIRED";
+                                }[];
+                                updated: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    code: string;
+                                    name: string;
+                                    /** @enum {string} */
+                                    status: "ACTIVE" | "REPAIR" | "RETIRED";
+                                }[];
+                                deleted: string[];
+                            };
+                            operators: {
+                                created: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    name: string;
+                                }[];
+                                updated: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    name: string;
+                                }[];
+                                deleted: string[];
+                            };
+                            raw_materials: {
+                                created: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    code: string;
+                                    name: string;
+                                }[];
+                                updated: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    code: string;
+                                    name: string;
+                                }[];
+                                deleted: string[];
+                            };
+                            locations: {
+                                created: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    code: string;
+                                    name: string;
+                                }[];
+                                updated: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    code: string;
+                                    name: string;
+                                }[];
+                                deleted: string[];
+                            };
+                        };
+                        timestamp: number;
+                    };
+                };
+            };
+        };
+    };
+    SyncController_push: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Device-Token": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    changes: {
+                        production_entries?: {
+                            /** @default [] */
+                            created?: ({
+                                /** Format: uuid */
+                                id: string;
+                            } & {
+                                [key: string]: unknown;
+                            })[];
+                            /** @default [] */
+                            updated?: ({
+                                /** Format: uuid */
+                                id: string;
+                            } & {
+                                [key: string]: unknown;
+                            })[];
+                            /** @default [] */
+                            deleted?: string[];
+                        };
+                        waste_entries?: {
+                            /** @default [] */
+                            created?: ({
+                                /** Format: uuid */
+                                id: string;
+                            } & {
+                                [key: string]: unknown;
+                            })[];
+                            /** @default [] */
+                            updated?: ({
+                                /** Format: uuid */
+                                id: string;
+                            } & {
+                                [key: string]: unknown;
+                            })[];
+                            /** @default [] */
+                            deleted?: string[];
+                        };
+                    };
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        accepted: string[];
+                        rejected: {
+                            id: string;
+                            table: string;
+                            reason: string;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    RejectionsController_list: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                status?: "REJECTED" | "RESOLVED" | "DISMISSED";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            /** @enum {string} */
+                            kind: "PRODUCTION_ENTRY" | "WASTE_ENTRY";
+                            /** @enum {string} */
+                            status: "REJECTED" | "RESOLVED" | "DISMISSED";
+                            reason: string;
+                            /** Format: uuid */
+                            deviceId: string;
+                            deviceName: string;
+                            recordedByName: string | null;
+                            /** Format: uuid */
+                            jobCardId: string | null;
+                            jobCardNumber: string | null;
+                            payload: {
+                                [key: string]: unknown;
+                            };
+                            /** Format: date-time */
+                            deviceRecordedAt: string | null;
+                            /** Format: date-time */
+                            receivedAt: string;
+                            reviewedByName: string | null;
+                            /** Format: date-time */
+                            reviewedAt: string | null;
+                            reviewNote: string | null;
+                        }[];
+                        total: number;
+                        page: number;
+                        pageSize: number;
+                    };
+                };
+            };
+        };
+    };
+    RejectionsController_resolve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    note: string;
+                };
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    RejectionsController_dismiss: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    note: string;
+                };
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

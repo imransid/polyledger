@@ -14,7 +14,7 @@
     "db:seed:demo": "pnpm --filter @polyledger/shared build && pnpm --filter @polyledger/api seed:demo",
     "api:client": "pnpm --filter @polyledger/api openapi && pnpm --filter @polyledger/office api:generate",
     "build": "pnpm -r build",
-    "test": "pnpm -r test",
+    "test": "pnpm --filter @polyledger/shared test && pnpm --filter @polyledger/office test && pnpm --filter @polyledger/api test",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
     "prepare": "git config core.hooksPath .githooks",

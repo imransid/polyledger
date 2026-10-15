@@ -335,7 +335,8 @@ describe('dashboard', () => {
     // Closed eight days ago: outside the seven days, however big.
     const old = await runningCard(machine3, mould1);
     await issue(old.id, '30', '0.5');
-    await handOverAndClose(old.id, 0);
+    await record(old.id, { shiftDate: addDays(today, -8) }).expect(201);
+    await handOverAndClose(old.id, 1_000);
     await prisma.jobCard.update({
       where: { id: old.id },
       data: { closedAt: new Date(Date.now() - 8 * 86_400_000) },

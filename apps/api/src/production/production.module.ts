@@ -21,6 +21,7 @@ import { GetJobCardSummaryHandler } from './queries/get-job-card-summary.js';
 import { GetJobCardHandler } from './queries/get-job-card.js';
 import { GetMachineBoardHandler } from './queries/get-machine-board.js';
 import { GetWasteReportHandler } from './queries/get-waste-report.js';
+import { ListChangedJobCardsHandler } from './queries/list-changed-job-cards.js';
 import { ListJobCardsHandler } from './queries/list-job-cards.js';
 import { ListMaterialDifferencesHandler } from './queries/list-material-differences.js';
 import { ListProductionEntriesHandler } from './queries/list-production-entries.js';
@@ -53,6 +54,7 @@ import { ListWasteEntriesHandler } from './queries/list-waste-entries.js';
     GetMachineBoardHandler,
     GetDayOutputHandler,
     ListMaterialDifferencesHandler,
+    ListChangedJobCardsHandler,
   ],
 })
 export class ProductionModule {}

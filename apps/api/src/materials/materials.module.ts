@@ -3,6 +3,7 @@ import { CreateRawMaterialHandler } from './commands/create-raw-material.js';
 import { UpdateRawMaterialHandler } from './commands/update-raw-material.js';
 import { GetRawMaterialsHandler } from './queries/get-raw-materials.js';
 import { ListActiveRawMaterialsHandler } from './queries/list-active-raw-materials.js';
+import { ListChangedRawMaterialsHandler } from './queries/list-changed-raw-materials.js';
 import { ListRawMaterialsHandler } from './queries/list-raw-materials.js';
 import { RawMaterialsController } from './raw-materials.controller.js';
 
@@ -14,6 +15,7 @@ import { RawMaterialsController } from './raw-materials.controller.js';
     ListRawMaterialsHandler,
     GetRawMaterialsHandler,
     ListActiveRawMaterialsHandler,
+    ListChangedRawMaterialsHandler,
   ],
 })
 export class MaterialsModule {}

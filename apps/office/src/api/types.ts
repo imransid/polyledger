@@ -8,6 +8,11 @@ type Ok<Path extends keyof paths> = paths[Path] extends {
 }
   ? Json<Response>
   : never;
+type Created<Path extends keyof paths> = paths[Path] extends {
+  post: { responses: { 201: infer Response } };
+}
+  ? Json<Response>
+  : never;
 type Sent<Path extends keyof paths> = paths[Path] extends {
   post: { requestBody: { content: { 'application/json': infer Body } } };
 }
@@ -74,6 +79,12 @@ export type OrderFigures = Ok<'/dashboard/orders'>;
 export type StockFigures = Ok<'/dashboard/stock'>;
 export type LeakFigures = Ok<'/dashboard/leaks'>;
 export type WaitingChallan = Ok<'/dashboard/gate'>[number];
+export type Device = Ok<'/devices'>[number];
+export type DeviceStatus = Device['status'];
+export type PairingCode = Created<'/devices'>;
+export type PinHolder = Ok<'/users/pins'>[number];
+export type Rejection = Ok<'/sync/rejections'>['items'][number];
+export type RejectionStatus = Rejection['status'];
 export type Operator = Ok<'/users/operators'>[number];
 
 export interface Page<T> {

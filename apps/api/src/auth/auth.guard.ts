@@ -9,7 +9,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../database/prisma.service.js';
 import type { Role } from '../generated/prisma/client.js';
-import { type AuthUser, IS_PUBLIC, ROLES } from './decorators.js';
+import { type AuthUser, IS_DEVICE, IS_PUBLIC, ROLES } from './decorators.js';
 import { TokenService } from './infra/tokens.js';
 
 interface AuthRequest {
@@ -17,8 +17,8 @@ interface AuthRequest {
   user?: AuthUser;
 }
 
-// Deny by default: a route needs @Public() or a @Roles() that includes the
-// caller's role.
+// Deny by default: a route needs @Public(), a @Roles() that includes the
+// caller's role, or @Device() for a paired tablet.
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
@@ -29,7 +29,10 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const targets = [context.getHandler(), context.getClass()];
-    if (this.reflector.getAllAndOverride<boolean>(IS_PUBLIC, targets)) {
+    if (
+      this.reflector.getAllAndOverride<boolean>(IS_PUBLIC, targets) ||
+      this.reflector.getAllAndOverride<boolean>(IS_DEVICE, targets)
+    ) {
       return true;
     }
 

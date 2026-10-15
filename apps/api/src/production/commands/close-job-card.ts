@@ -2,6 +2,7 @@ import { ConflictException } from '@nestjs/common';
 import { Command, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { withIdempotencyKey } from '../../database/idempotency.js';
 import { PrismaService } from '../../database/prisma.service.js';
+import { canClose } from '../domain/closing.js';
 import type { JobCardSummary } from '../domain/summary.js';
 import { JobCardReporter } from '../infra/job-card-reporter.js';
 import {
@@ -42,10 +43,20 @@ export class CloseJobCardHandler implements ICommandHandler<CloseJobCardCommand>
         async () => {
           const card = await lockJobCard(tx, jobCardId);
           assertCan(card, 'close');
-          const { piecesOnFloor } = await this.reporter.floorStock(card);
+          const { piecesOnFloor, issued } =
+            await this.reporter.floorStock(card);
           if (piecesOnFloor > 0) {
             throw new ConflictException(
               `${card.number} still has ${piecesOnFloor} good pieces on the floor; hand them over first`,
+            );
+          }
+          const entries = await tx.productionEntry.count({
+            where: { jobCardId, reversedAt: null },
+          });
+          const hadMaterial = [...issued.values()].some((grams) => grams !== 0);
+          if (!canClose(entries > 0, hadMaterial)) {
+            throw new ConflictException(
+              `${card.number} has material issued but no production yet`,
             );
           }
 

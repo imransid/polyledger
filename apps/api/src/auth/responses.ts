@@ -25,3 +25,16 @@ export const userResponse = z.object({
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });
+
+export const pinsResponse = z.array(
+  z.object({
+    id: z.uuid(),
+    name: z.string(),
+    role: z.enum(Role),
+    email: z.string().nullable(),
+    phone: z.string().nullable(),
+    hasPin: z.boolean(),
+    /** Locked out of at least one tablet until then. */
+    lockedUntil: z.iso.datetime().nullable(),
+  }),
+);

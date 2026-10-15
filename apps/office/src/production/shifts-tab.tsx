@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useLocation } from 'react-router';
 import { z } from 'zod';
 import { api } from '@/api/client';
 import { unwrap } from '@/api/errors';
@@ -41,6 +42,7 @@ import { wholeNumber } from '@/lib/form-fields';
 import { formatDay, formatPieces, formatWeight } from '@/lib/format';
 import { useWrite } from '@/lib/use-write';
 import { Warnings } from './parts';
+import type { EntryPrefill, Prefill, WastePrefill } from './prefill';
 import { useCardEntries } from './use-job-card';
 
 const words = text.production;
@@ -56,20 +58,34 @@ export function ShiftsTab({ card }: { card: JobCard }) {
   const lastShotEnd = entries.data
     ?.filter((entry) => !entry.reversedAt)
     .at(-1)?.shotEnd;
+  // From "Record in office" on a refused tablet record.
+  const prefill = (useLocation().state as { prefill?: Prefill } | null)
+    ?.prefill;
   return (
     <div className="grid gap-6">
+      {records && inWork && prefill && (
+        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          {text.tablets.prefilled}
+        </p>
+      )}
       {reads && entries.data && (
         <EntryTable card={card} entries={entries.data} />
       )}
       {records && inWork && (
-        <RecordEntry
+        <RecordEntryLoader
           key={lastShotEnd ?? 'first'}
           card={card}
           shotStart={lastShotEnd}
+          prefill={prefill && 'entry' in prefill ? prefill.entry : undefined}
         />
       )}
       {reads && <WasteTable card={card} />}
-      {records && inWork && <RecordWasteLoader card={card} />}
+      {records && inWork && (
+        <RecordWasteLoader
+          card={card}
+          prefill={prefill && 'waste' in prefill ? prefill.waste : undefined}
+        />
+      )}
     </div>
   );
 }
@@ -164,22 +180,35 @@ const entryForm = z
     path: ['shotEnd'],
   });
 
+interface RecordEntryProps {
+  card: JobCard;
+  shotStart?: number;
+  prefill?: EntryPrefill;
+}
+
+// The operator select needs its options before the form fills it in.
+function RecordEntryLoader(props: RecordEntryProps) {
+  const operators = useOperators();
+  if (!operators.data) {
+    return null;
+  }
+  return <RecordEntry {...props} operators={operators.data} />;
+}
+
 function RecordEntry({
   card,
   shotStart,
-}: {
-  card: JobCard;
-  shotStart?: number;
-}) {
+  prefill,
+  operators,
+}: RecordEntryProps & { operators: Operator[] }) {
   const user = useUser();
-  const operators = useOperators();
   const write = useWrite('job-cards', 'stock', 'production');
   const [warnings, setWarnings] = useState<string[]>();
   // An operator records their own shift; the API refuses anyone else.
   const isOperator = user.role === 'OPERATOR';
   const form = useForm({
     resolver: zodResolver(entryForm),
-    defaultValues: {
+    defaultValues: prefill ?? {
       shiftDate: factoryToday(),
       shift: 'A' as Shift,
       operatorId: isOperator ? user.id : '',
@@ -255,7 +284,7 @@ function RecordEntry({
         ) : (
           <SelectField
             label={words.operator}
-            options={operatorOptions(operators.data ?? [])}
+            options={operatorOptions(operators)}
             error={errors.operatorId?.message}
             {...form.register('operatorId')}
           />
@@ -355,7 +384,13 @@ function WasteTable({ card }: { card: JobCard }) {
   );
 }
 
-function RecordWasteLoader({ card }: { card: JobCard }) {
+function RecordWasteLoader({
+  card,
+  prefill,
+}: {
+  card: JobCard;
+  prefill?: WastePrefill;
+}) {
   const materials = useAllRawMaterials();
   const locations = useAllLocations();
   if (!materials.data || !locations.data) {
@@ -364,6 +399,7 @@ function RecordWasteLoader({ card }: { card: JobCard }) {
   return (
     <RecordWaste
       card={card}
+      prefill={prefill}
       regrinds={materials.data.filter(
         (m) => m.isActive && m.type === 'REGRIND',
       )}
@@ -399,22 +435,28 @@ const wasteForm = z
 
 interface RecordWasteProps {
   card: JobCard;
+  prefill?: WastePrefill;
   regrinds: RawMaterial[];
   yards: Location[];
 }
 
-function RecordWaste({ card, regrinds, yards }: RecordWasteProps) {
+function RecordWaste({ card, prefill, regrinds, yards }: RecordWasteProps) {
   const write = useWrite('job-cards', 'stock');
   const [recorded, setRecorded] = useState(false);
   const form = useForm({
     resolver: zodResolver(wasteForm),
-    defaultValues: {
-      shiftDate: factoryToday(),
-      shift: 'A' as Shift,
-      wasteMaterialId: regrinds.length === 1 ? regrinds[0].id : '',
-      scrapLocationId: yards.length === 1 ? yards[0].id : '',
-      kilograms: WASTE_TYPES.map(() => ''),
-    },
+    defaultValues: prefill
+      ? {
+          ...prefill,
+          kilograms: WASTE_TYPES.map((type) => prefill.kilograms[type]),
+        }
+      : {
+          shiftDate: factoryToday(),
+          shift: 'A' as Shift,
+          wasteMaterialId: regrinds.length === 1 ? regrinds[0].id : '',
+          scrapLocationId: yards.length === 1 ? yards[0].id : '',
+          kilograms: WASTE_TYPES.map(() => ''),
+        },
   });
   const { errors, isSubmitting } = form.formState;
 

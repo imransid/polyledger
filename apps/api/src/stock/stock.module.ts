@@ -16,6 +16,7 @@ import { GetStockCardHandler } from './queries/get-stock-card.js';
 import { GetStockDocumentHandler } from './queries/get-stock-document.js';
 import { GetStockTotalsHandler } from './queries/get-stock-totals.js';
 import { ListBalancesHandler } from './queries/list-balances.js';
+import { ListChangedLocationsHandler } from './queries/list-changed-locations.js';
 import { ListLocationsHandler } from './queries/list-locations.js';
 import { ListLowStockHandler } from './queries/list-low-stock.js';
 import { ListReceiptShortagesHandler } from './queries/list-receipt-shortages.js';
@@ -33,6 +34,7 @@ import { StockReportsController } from './stock-reports.controller.js';
     CreateLocationHandler,
     UpdateLocationHandler,
     ListLocationsHandler,
+    ListChangedLocationsHandler,
     GetLocationHandler,
     PostReceiptHandler,
     PostTransferHandler,

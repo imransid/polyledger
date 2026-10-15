@@ -48,6 +48,8 @@ export class RecordProductionCommand extends Command<RecordedEntry> {
     readonly jobCardId: string,
     readonly entry: NewProductionEntry,
     readonly idempotencyKey: string | undefined,
+    /** A tablet names its own records. */
+    readonly entryId?: string,
   ) {
     super();
   }
@@ -68,6 +70,7 @@ export class RecordProductionHandler implements ICommandHandler<RecordProduction
     jobCardId,
     entry,
     idempotencyKey,
+    entryId,
   }: RecordProductionCommand): Promise<RecordedEntry> {
     try {
       return await this.prisma.$transaction((tx) =>
@@ -78,7 +81,7 @@ export class RecordProductionHandler implements ICommandHandler<RecordProduction
             key: idempotencyKey,
             command: 'RecordProduction',
           },
-          () => this.record(tx, actor, jobCardId, entry),
+          () => this.record(tx, actor, jobCardId, entry, entryId),
         ),
       );
     } catch (error) {
@@ -96,7 +99,18 @@ export class RecordProductionHandler implements ICommandHandler<RecordProduction
     actor: AuthUser,
     jobCardId: string,
     entry: NewProductionEntry,
+    entryId: string | undefined,
   ): Promise<RecordedEntry> {
+    // A tablet that never heard back sends the same record again.
+    const earlier =
+      entryId &&
+      (await tx.productionEntry.findUnique({
+        where: { id: entryId },
+        include: { materials: true },
+      }));
+    if (earlier) {
+      return { ...toEntryView(earlier), warnings: [] };
+    }
     const card = await lockJobCard(tx, jobCardId);
     assertInWork(card);
     await this.assertOperator(actor, entry.operatorId);
@@ -145,6 +159,7 @@ export class RecordProductionHandler implements ICommandHandler<RecordProduction
     const created = await tx.productionEntry.create({
       data: {
         ...entry,
+        id: entryId,
         shiftDate,
         jobCardId,
         stockDocumentId: document.id,

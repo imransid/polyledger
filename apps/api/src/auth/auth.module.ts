@@ -8,6 +8,7 @@ import type { Env } from '../config/env.js';
 import { AuthController } from './auth.controller.js';
 import { AuthGuard } from './auth.guard.js';
 import { ChangePasswordHandler } from './commands/change-password.js';
+import { CheckPinHandler } from './commands/check-pin.js';
 import { ChangeUserRoleHandler } from './commands/change-user-role.js';
 import { CreateUserHandler } from './commands/create-user.js';
 import { DeactivateUserHandler } from './commands/deactivate-user.js';
@@ -17,12 +18,15 @@ import { ReactivateUserHandler } from './commands/reactivate-user.js';
 import { RefreshSessionHandler } from './commands/refresh-session.js';
 import { ResetUserPasswordHandler } from './commands/reset-user-password.js';
 import { SeedOwnerCommand, SeedOwnerHandler } from './commands/seed-owner.js';
+import { SetPinHandler } from './commands/set-pin.js';
 import { normalizeLogin } from './domain/login.js';
 import { RefreshCookie } from './infra/refresh-cookie.js';
 import { TokenService } from './infra/tokens.js';
 import { GetCurrentUserHandler } from './queries/get-current-user.js';
 import { GetUserNamesHandler } from './queries/get-user-names.js';
+import { ListChangedUsersHandler } from './queries/list-changed-users.js';
 import { ListOperatorsHandler } from './queries/list-operators.js';
+import { ListPinsHandler } from './queries/list-pins.js';
 import { GetUserHandler } from './queries/get-user.js';
 import { ListUsersHandler } from './queries/list-users.js';
 import { UsersController } from './users.controller.js';
@@ -70,6 +74,10 @@ function byIpAndLogin(request: Record<string, any>): string {
     GetUserNamesHandler,
     ListOperatorsHandler,
     ListUsersHandler,
+    SetPinHandler,
+    CheckPinHandler,
+    ListPinsHandler,
+    ListChangedUsersHandler,
   ],
 })
 export class AuthModule implements OnApplicationBootstrap {

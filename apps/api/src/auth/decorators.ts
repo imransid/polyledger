@@ -13,6 +13,8 @@ export interface AuthUser {
 }
 
 export const IS_PUBLIC = 'isPublic';
+/** Set by the sync module's @Device(), whose own guard checks the tablet. */
+export const IS_DEVICE = 'isDevice';
 export const ROLES = 'roles';
 export const ALL_ROLES = Object.values(Role);
 /** Everyone but the gate guard, who only passes challans. */
